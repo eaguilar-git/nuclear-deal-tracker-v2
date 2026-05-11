@@ -1,0 +1,49 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.Python
+*.so
+.pytest_cache/
+.venv/
+venv/
+env/
+.env
+.env.*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Credentials / secrets — belt and suspenders, should never live here anyway
+*.json.bak
+credentials*.json
+*service-account*.json
+*api*key*
+*.pem
+*.key
+
+# Local outputs / scratch / drafts
+*.log
+*.bak
+scratch/
+drafts/
+output/
+
+# Spreadsheets / CSVs — keep tracked ONLY in reference/
+*.xlsx
+!reference/*.xlsx
+*.csv
+!reference/*.csv
+
+# Node/npm if anything frontend ever lands here
+node_modules/

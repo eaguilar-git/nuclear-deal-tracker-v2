@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nuclear Deal Tracker — Data Entry</title>
+<style>
+:root {
+  --navy:        #1e3a5f;
+  --navy-dark:   #15293f;
+  --accent:      #2563eb;
+  --accent-soft: #dbeafe;
+  --good:        #16a34a;
+  --warn:        #d97706;
+  --danger:      #dc2626;
+  --gray-50:     #f8fafc;
+  --gray-100:    #f1f5f9;
+  --gray-200:    #e2e8f0;
+  --gray-300:    #cbd5e1;
+  --gray-400:    #94a3b8;
+  --gray-500:    #64748b;
+  --gray-600:    #475569;
+  --gray-700:    #334155;
+  --gray-800:    #1e293b;
+  --gray-900:    #0f172a;
+  --bg:          #f8fafc;
+  --paper:       #ffffff;
+  --border:      #e2e8f0;
+  --shadow-sm:   0 1px 2px rgba(15,23,42,0.04);
+  --shadow:      0 1px 3px rgba(15,23,42,0.08), 0 4px 12px rgba(15,23,42,0.04);
+  --shadow-lg:   0 20px 40px rgba(15,23,42,0.15);
+  --radius:      8px;
+  --radius-sm:   6px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  color: var(--gray-800);
+  background: var(--bg);
+  min-height: 100vh;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+.app-header {
+  background: var(--navy);
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 4px solid var(--accent);
+}
+
+.app-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.app-header .subtitle {
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  margin-left: 12px;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot.online   { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.6); }
+.dot.offline  { background: var(--danger); }
+.dot.checking { background: var(--warn); animation: pulse 1.5s ease-in-out infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+/* ── Tabs ───────────────────────────────────────────────────────────────── */
+
+.tab-bar {
+  background: var(--paper);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  padding: 14px 16px;
+  font: 500 13px -apple-system, sans-serif;
+  color: var(--gray-500);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  position: relative;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab:hover { color: var(--gray-700); }
+
+.tab.active {
+  color: var(--navy);
+  border-bottom-color: var(--accent);
+}
+
+.tab .count {
+  display: inline-block;
+  background: var(--gray-100);
+  color: var(--gray-600);
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 6px;
+}
+
+.tab.active .count { background: var(--accent-soft); color: var(--navy); }
+
+/* ── Main content ───────────────────────────────────────────────────────── */
+
+.app-main {
+  padding: 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.toolbar-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.toolbar-right { display: flex; align-items: center; gap: 8px; }
+
+.search-input {
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font: 13px -apple-system, sans-serif;
+  width: 320px;
+  background: var(--paper);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+button.btn {
+  border: 1px solid var(--gray-300);
+  background: var(--paper);
+  color: var(--gray-700);
+  font: 500 13px -apple-system, sans-serif;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+button.btn:hover { background: var(--gray-50); border-color: var(--gray-400); }
+
+button.btn.primary {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+button.btn.primary:hover { background: #1d4ed8; border-color: #1d4ed8; }
+
+button.btn.success {
+  background: var(--good);
+  color: white;
+  border-color: var(--good);
+}
+button.btn.success:hover { background: #15803d; }
+
+button.btn.danger {
+  background: var(--paper);
+  color: var(--danger);
+  border-color: var(--gray-300);
+}
+button.btn.danger:hover { background: #fef2f2; border-color: var(--danger); }
+
+button.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Pending changes badge ──────────────────────────────────────────────── */
+
+.pending-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--warn);
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.pending-badge:hover { opacity: 0.85; }
+.pending-badge.zero { background: var(--gray-200); color: var(--gray-500); cursor: default; }
+
+/* ── Data table ─────────────────────────────────────────────────────────── */
+
+.table-wrap {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: auto;
+  box-shadow: var(--shadow-sm);
+  max-height: calc(100vh - 280px);
+}
+
+table.data {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+table.data thead th {
+  position: sticky;
+  top: 0;
+  background: var(--gray-50);
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--gray-600);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+table.data tbody tr {
+  border-bottom: 1px solid var(--gray-100);
+  transition: background-color 0.1s;
+}
+table.data tbody tr:hover { background: var(--gray-50); }
+table.data tbody tr.pending-add  { background: rgba(34,197,94,0.06); }
+table.data tbody tr.pending-edit { background: rgba(217,119,6,0.06); }
+
+table.data tbody td {
+  padding: 8px 12px;
+  vertical-align: top;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+table.data td.actions {
+  white-space: nowrap;
+  width: 1px;
+}
+
+table.data td .pending-tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.pending-tag.add  { background: var(--good); color: white; }
+.pending-tag.edit { background: var(--warn); color: white; }
+
+.row-action-btn {
+  background: transparent;
+  border: 1px solid var(--gray-300);
+  color: var(--gray-600);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.row-action-btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Modal ──────────────────────────────────────────────────────────────── */
+
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(15,23,42,0.5);
+  z-index: 100;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+.modal-backdrop.open { display: flex; }
+
+.modal {
+  background: var(--paper);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 720px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 80px);
+}
+
+.modal-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--gray-50);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.modal-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--navy);
+}
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--gray-500);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.modal-close:hover { background: var(--gray-200); color: var(--gray-800); }
+
+.modal-body {
+  padding: 20px 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+.modal-footer {
+  padding: 14px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  background: var(--gray-50);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+/* ── Form fields ────────────────────────────────────────────────────────── */
+
+.field {
+  margin-bottom: 14px;
+}
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.field label {
+  display: block;
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--gray-600);
+  margin-bottom: 4px;
+}
+
+.field label .required { color: var(--danger); margin-left: 2px; }
+
+.field input[type=text],
+.field input[type=number],
+.field input[type=date],
+.field textarea,
+.field select {
+  width: 100%;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font: 13px -apple-system, sans-serif;
+  background: var(--paper);
+  color: var(--gray-900);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field textarea { font-family: inherit; resize: vertical; min-height: 60px; }
+.field input:focus, .field textarea:focus, .field select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+.field .hint {
+  font-size: 11px;
+  color: var(--gray-500);
+  margin-top: 2px;
+}
+
+/* Multi-select / FK picker */
+.fk-multiselect {
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  padding: 6px;
+  min-height: 40px;
+  background: var(--paper);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: flex-start;
+}
+.fk-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--accent-soft);
+  color: var(--navy);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.fk-tag .remove {
+  cursor: pointer;
+  font-weight: bold;
+  margin-left: 4px;
+  opacity: 0.6;
+}
+.fk-tag .remove:hover { opacity: 1; }
+.fk-input {
+  border: none;
+  outline: none;
+  flex: 1;
+  min-width: 120px;
+  padding: 2px;
+  font: 13px -apple-system, sans-serif;
+  background: transparent;
+}
+
+.fk-dropdown {
+  position: absolute;
+  background: var(--paper);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 50;
+  margin-top: 4px;
+  width: 360px;
+}
+.fk-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 1px solid var(--gray-100);
+}
+.fk-option:hover, .fk-option.highlight { background: var(--accent-soft); }
+.fk-option .meta { color: var(--gray-500); font-size: 11px; }
+
+/* ── Pending changes drawer ─────────────────────────────────────────────── */
+
+.drawer-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(15,23,42,0.5);
+  z-index: 110;
+  display: none;
+}
+.drawer-backdrop.open { display: block; }
+
+.drawer {
+  position: fixed;
+  right: 0; top: 0; bottom: 0;
+  width: 480px;
+  background: var(--paper);
+  box-shadow: var(--shadow-lg);
+  z-index: 111;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.25s ease-out;
+}
+.drawer.open { transform: translateX(0); }
+
+.drawer-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--navy);
+  color: white;
+}
+.drawer-header h2 { font-size: 16px; font-weight: 600; }
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px;
+}
+.drawer-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--gray-50);
+}
+
+.pending-item {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 8px;
+  background: var(--paper);
+  font-size: 12px;
+}
+.pending-item .op-tag {
+  display: inline-block;
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-right: 6px;
+  letter-spacing: 0.5px;
+}
+.pending-item .op-tag.add  { background: var(--good); color: white; }
+.pending-item .op-tag.edit { background: var(--warn); color: white; }
+.pending-item .table-name { color: var(--gray-600); font-size: 11px; }
+.pending-item .summary { margin-top: 6px; font-weight: 500; }
+.pending-item .actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+}
+.pending-item .actions button {
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--gray-500);
+  font-size: 13px;
+}
+.empty-state .ico { font-size: 32px; margin-bottom: 8px; }
+
+/* ── Review queue ──────────────────────────────────────────────────────── */
+
+.tab.review-tab .count.has-items {
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 600;
+}
+.tab.review-tab.active { color: #92400e; border-bottom-color: #f59e0b; }
+.tab.review-tab.active .count.has-items { background: #fde68a; }
+
+.review-intro {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #78350f;
+  margin-bottom: 16px;
+}
+.review-intro strong { color: #451a03; font-weight: 600; }
+.review-intro em { font-style: normal; font-weight: 600; color: #451a03; }
+.review-intro code {
+  background: #fef3c7;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #78350f;
+}
+
+/* Filter chips at top of review queue */
+.review-chips {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.review-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  min-width: 130px;
+}
+.review-chip:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--gray-50);
+}
+.review-chip.active {
+  border-color: var(--accent);
+  border-width: 1.5px;
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 3px rgba(110, 132, 174, 0.12);
+}
+.review-chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.review-chip .chip-count {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.review-chip .chip-label {
+  font-size: 11px;
+  color: var(--gray-600);
+  font-weight: 500;
+  text-align: left;
+  line-height: 1.2;
+}
+.review-chip.active .chip-label { color: var(--navy); font-weight: 600; }
+.review-chip.chip-medium .chip-count { color: #b45309; }
+.review-chip.chip-new .chip-count { color: #b91c1c; }
+.review-chip.chip-proposed .chip-count { color: #6b21a8; }
+
+.review-group {
+  margin-bottom: 22px;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.review-group-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--border);
+}
+.review-group-title { font-weight: 600; font-size: 13px; color: var(--navy); }
+.review-group-count {
+  background: #fde68a;
+  color: #78350f;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+.review-group-desc {
+  font-size: 12px;
+  color: var(--gray-600);
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.5;
+}
+.review-group-desc code {
+  background: var(--gray-100);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+.review-group-desc em { font-style: italic; }
+.review-items {}
+.review-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.review-item:last-child { border-bottom: none; }
+.review-item:hover { background: var(--gray-50); }
+.review-item-main { flex: 1; min-width: 0; }
+.review-item-meta {
+  font-size: 11px;
+  color: var(--gray-500);
+  margin-bottom: 4px;
+}
+.review-item-meta code {
+  background: var(--gray-100);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 10px;
+  color: var(--gray-700);
+}
+.review-item-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--gray-900);
+}
+.review-item-flag {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #92400e;
+}
+.review-item-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.review-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--gray-500);
+}
+.review-empty-emoji {
+  font-size: 48px;
+  color: var(--good);
+  margin-bottom: 12px;
+}
+.review-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+.review-empty-sub {
+  font-size: 12px;
+  line-height: 1.5;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* ── Toast ──────────────────────────────────────────────────────────────── */
+
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  background: var(--gray-900);
+  color: white;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  box-shadow: var(--shadow-lg);
+  animation: toast-in 0.2s ease-out;
+  max-width: 360px;
+}
+.toast.success { background: var(--good); }
+.toast.error   { background: var(--danger); }
+.toast.warn    { background: var(--warn); }
+@keyframes toast-in {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+/* ── Confirmation modal ─────────────────────────────────────────────────── */
+
+.confirm-summary {
+  background: var(--gray-50);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+.confirm-summary strong { color: var(--navy); }
+.confirm-list {
+  list-style: none;
+  max-height: 280px;
+  overflow-y: auto;
+  font-size: 12px;
+}
+.confirm-list li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <h1>Nuclear Deal Tracker — Data Entry
+      <span class="subtitle">v0.4 schema · 6 tables</span>
+    </h1>
+  </div>
+  <div class="connection-status" id="connStatus">
+    <span class="dot checking" id="connDot"></span>
+    <span id="connText">Connecting to local server…</span>
+  </div>
+</header>
+
+<div class="tab-bar" id="tabBar"></div>
+
+<main class="app-main">
+  <div class="table-toolbar">
+    <div class="toolbar-left">
+      <input class="search-input" id="searchInput" placeholder="Search this table…" />
+      <span style="font-size: 12px; color: var(--gray-500);" id="rowCountLabel"></span>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn" id="reloadBtn">↻ Reload from Sheet</button>
+      <button class="btn" id="exportBtn">⬇ Export Excel</button>
+      <span class="pending-badge zero" id="pendingBadge" onclick="openDrawer()">
+        <span id="pendingCount">0</span> pending
+      </span>
+      <button class="btn primary" id="addRowBtn">+ Add row</button>
+    </div>
+  </div>
+  <div class="table-wrap" id="tableWrap">
+    <div class="empty-state">Loading…</div>
+  </div>
+</main>
+
+<!-- ── Add/edit modal ────────────────────────────────────────────────── -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Add row</h2>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" id="modalSaveBtn" onclick="saveModalRow()">Save (local)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Pending drawer ────────────────────────────────────────────────── -->
+<div class="drawer-backdrop" id="drawerBackdrop" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <h2>Pending changes</h2>
+    <button class="modal-close" style="color:white" onclick="closeDrawer()">×</button>
+  </div>
+  <div class="drawer-body" id="drawerBody">
+    <div class="empty-state"><div class="ico">✓</div>No pending changes.</div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn" id="discardAllBtn" onclick="discardAll()">Discard all pending changes</button>
+    <button class="btn success" id="pushBtn" onclick="confirmPush()">↑ Push to Sheet</button>
+  </div>
+</div>
+
+<!-- ── Push-confirm modal ─────────────────────────────────────────── -->
+<div class="modal-backdrop" id="confirmBackdrop">
+  <div class="modal" style="max-width: 600px;">
+    <div class="modal-header">
+      <h2>Confirm push to live Sheet</h2>
+      <button class="modal-close" onclick="closeConfirm()">×</button>
+    </div>
+    <div class="modal-body" id="confirmBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeConfirm()">Cancel</button>
+      <button class="btn success" id="pushNowBtn" onclick="executePush()">Push now</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ─── State ──────────────────────────────────────────────────────────────────
+const API = "http://localhost:8001";
+const STORAGE_KEY = "ndt_pending_v1";
+
+let state = {
+  tables: {},       // { "Sites": [...], ... } — rows from live Sheet
+  schemas: {},      // { "Sites": ["site_id", ...], ... }
+  idCols: {},       // { "Sites": "site_id", ... }
+  vocabs: {},       // { "asset_status": [...], ... }
+  activeTable: "Sites",
+  search: "",
+  pending: loadPending(),
+  modal: { editingId: null, fkOpenField: null },
+};
+
+function loadPending() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  } catch { return []; }
+}
+function savePending() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.pending));
+}
+
+// ─── Connection / load ──────────────────────────────────────────────────────
+
+async function checkConnection() {
+  const dot = document.getElementById("connDot");
+  const text = document.getElementById("connText");
+  try {
+    const r = await fetch(`${API}/api/health`);
+    if (!r.ok) throw new Error("server returned " + r.status);
+    const d = await r.json();
+    dot.className = "dot online";
+    text.textContent = `Connected · ${d.first_tab}`;
+    return true;
+  } catch (e) {
+    dot.className = "dot offline";
+    text.textContent = "Server offline — run: python3 data_entry_server.py";
+    return false;
+  }
+}
+
+async function loadTables() {
+  const r = await fetch(`${API}/api/tables`);
+  if (!r.ok) throw new Error("Failed to load tables: " + r.status);
+  const d = await r.json();
+  state.tables = d.tables;
+  state.schemas = d.schemas;
+  state.idCols = d.id_cols;
+  state.vocabs = d.vocabularies;
+  renderTabs();
+  renderTable();
+  renderPending();
+  toast("Loaded " + Object.keys(state.tables).length + " tables", "success");
+}
+
+// ─── Tabs ───────────────────────────────────────────────────────────────────
+
+function renderTabs() {
+  const bar = document.getElementById("tabBar");
+  bar.innerHTML = "";
+
+  // 1) Special "Review queue" pseudo-tab first
+  const reviewItems = computeReviewQueue();
+  const reviewCount = reviewItems.medium.length + reviewItems.newEntities.length + reviewItems.proposedDeals.length;
+  const reviewBtn = document.createElement("button");
+  reviewBtn.className = "tab review-tab" + (state.activeTable === "__review__" ? " active" : "");
+  reviewBtn.innerHTML = `⚑ Review queue<span class="count ${reviewCount > 0 ? 'has-items' : ''}">${reviewCount}</span>`;
+  reviewBtn.onclick = () => { state.activeTable = "__review__"; state.search = ""; document.getElementById("searchInput").value = ""; renderTabs(); renderTable(); };
+  bar.appendChild(reviewBtn);
+
+  // 2) Real Sheet tabs
+  Object.keys(state.schemas).forEach(name => {
+    const btn = document.createElement("button");
+    btn.className = "tab" + (name === state.activeTable ? " active" : "");
+    const count = state.tables[name] ? state.tables[name].length : 0;
+    btn.innerHTML = `${name}<span class="count">${count}</span>`;
+    btn.onclick = () => { state.activeTable = name; state.search = ""; document.getElementById("searchInput").value = ""; renderTabs(); renderTable(); };
+    bar.appendChild(btn);
+  });
+}
+
+// ─── Review queue ───────────────────────────────────────────────────────────
+
+/* Inspect Announcements + Deals to build the three review groups.
+   Pending edits already in the queue are accounted for so cleared items
+   stop showing up immediately after a "Mark reviewed" click. */
+function computeReviewQueue() {
+  const out = { medium: [], newEntities: [], proposedDeals: [] };
+  const anns = state.tables["Announcements"] || [];
+  const deals = state.tables["Deals"] || [];
+
+  // Apply any pending edits as an overlay so the queue reflects what the
+  // user has staged but not yet pushed.
+  const pendingByRow = {}; // key: `${table}:${id}`  -> merged row
+  state.pending.forEach(p => {
+    if (p.op !== "edit") return;
+    const key = `${p.table}:${p.id}`;
+    pendingByRow[key] = { ...(pendingByRow[key] || {}), ...p.row };
+  });
+
+  anns.forEach(a => {
+    const id = a.announcement_id;
+    const overlay = pendingByRow[`Announcements:${id}`] || {};
+    const conf = (overlay.confidence ?? a.confidence ?? "").toString().toLowerCase();
+    const nef = (overlay.new_entity_flags ?? a.new_entity_flags ?? "").toString().trim();
+    if (conf === "medium") {
+      out.medium.push({ id, headline: a.headline || a.summary || "", date: a.published_date || "", source: a.source || "" });
+    }
+    if (nef) {
+      out.newEntities.push({ id, flag: nef, headline: a.headline || a.summary || "", date: a.published_date || "", source: a.source || "" });
+    }
+  });
+
+  deals.forEach(d => {
+    const id = d.deal_id;
+    const overlay = pendingByRow[`Deals:${id}`] || {};
+    const status = (overlay.confirmation_status ?? d.confirmation_status ?? "").toString().toLowerCase();
+    if (status.includes("proposed (scraper)") || status === "proposed") {
+      out.proposedDeals.push({ id, name: d.deal_name || "", type: d.deal_type || "", stage: d.deal_stage || "", lead: d.lead_entity || "" });
+    }
+  });
+
+  return out;
+}
+
+/* Render the Review queue view in place of the normal table. */
+function renderReviewQueue() {
+  const wrap = document.getElementById("tableWrap");
+  const q = computeReviewQueue();
+  const total = q.medium.length + q.newEntities.length + q.proposedDeals.length;
+
+  if (total === 0) {
+    wrap.innerHTML = `<div class="review-empty">
+      <div class="review-empty-emoji">✓</div>
+      <div class="review-empty-title">All clear — no items need review</div>
+      <div class="review-empty-sub">When the scraper flags low-confidence extractions, new entities, or proposes deals, they'll appear here for human review.</div>
+    </div>`;
+    document.getElementById("rowCountLabel").textContent = "";
+    return;
+  }
+
+  document.getElementById("rowCountLabel").textContent = `${total} item${total === 1 ? "" : "s"} need review`;
+
+  // Which group(s) should be visible. 'all' means everything; otherwise just one
+  const activeFilter = state.reviewFilter || "all";
+
+  let html = `<div class="review-intro">
+    <strong>Review queue.</strong> Three kinds of items end up here:
+    <em>(1)</em> announcements the scraper extracted with Medium confidence;
+    <em>(2)</em> announcements where the scraper saw a new entity name not in the database;
+    <em>(3)</em> deals the scraper proposed and that haven't been confirmed yet.
+    Click <strong>Edit record</strong> to open the full row in the editor. For Medium-confidence announcements only, you can <strong>Mark reviewed</strong> as a one-click clear once you've eyeballed the summary.
+  </div>`;
+
+  // Summary chips — click to filter the queue to that group
+  html += `<div class="review-chips">
+    <button class="review-chip ${activeFilter === 'all' ? 'active' : ''}" onclick="setReviewFilter('all')">
+      <span class="chip-count">${total}</span>
+      <span class="chip-label">All items</span>
+    </button>
+    <button class="review-chip chip-medium ${activeFilter === 'medium' ? 'active' : ''}" onclick="setReviewFilter('medium')" ${q.medium.length === 0 ? 'disabled' : ''}>
+      <span class="chip-count">${q.medium.length}</span>
+      <span class="chip-label">Medium confidence</span>
+    </button>
+    <button class="review-chip chip-new ${activeFilter === 'newEntities' ? 'active' : ''}" onclick="setReviewFilter('newEntities')" ${q.newEntities.length === 0 ? 'disabled' : ''}>
+      <span class="chip-count">${q.newEntities.length}</span>
+      <span class="chip-label">New entity flagged</span>
+    </button>
+    <button class="review-chip chip-proposed ${activeFilter === 'proposedDeals' ? 'active' : ''}" onclick="setReviewFilter('proposedDeals')" ${q.proposedDeals.length === 0 ? 'disabled' : ''}>
+      <span class="chip-count">${q.proposedDeals.length}</span>
+      <span class="chip-label">Proposed deals</span>
+    </button>
+  </div>`;
+
+  // Helper: should a given group render?
+  const showGroup = (group) => activeFilter === 'all' || activeFilter === group;
+
+  // ── Group 1: Medium confidence ─────────────────────────────────────────
+  if (q.medium.length > 0 && showGroup('medium')) {
+    html += `<div class="review-group">
+      <div class="review-group-head">
+        <div class="review-group-title">Announcements — Medium confidence</div>
+        <div class="review-group-count">${q.medium.length}</div>
+      </div>
+      <div class="review-group-desc">Pass-2 Claude was unsure about extraction. Skim the summary; if it looks fine, mark reviewed. If links are wrong, open the record and fix them.</div>
+      <div class="review-items">
+        ${q.medium.map(item => `
+          <div class="review-item">
+            <div class="review-item-main">
+              <div class="review-item-meta">${escapeHtml(item.date)} · ${escapeHtml(item.source)} · <code>${escapeHtml(item.id)}</code></div>
+              <div class="review-item-text">${escapeHtml(item.headline)}</div>
+            </div>
+            <div class="review-item-actions">
+              <button class="btn" onclick="editFromReview('Announcements', '${escapeAttr(item.id)}')">Edit record</button>
+              <button class="btn primary" onclick="markReviewedMedium('${escapeAttr(item.id)}')">Mark reviewed →</button>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>`;
+  }
+
+  // ── Group 2: New entities ──────────────────────────────────────────────
+  if (q.newEntities.length > 0 && showGroup('newEntities')) {
+    html += `<div class="review-group">
+      <div class="review-group-head">
+        <div class="review-group-title">Announcements — New entity flagged</div>
+        <div class="review-group-count">${q.newEntities.length}</div>
+      </div>
+      <div class="review-group-desc">Scraper found a name not in the database. You'll likely need to <em>create the new entity</em> (Site / Project / Deal / Context) in its tab, then re-open this record to link it. Once linked, clear the <code>new_entity_flags</code> field.</div>
+      <div class="review-items">
+        ${q.newEntities.map(item => `
+          <div class="review-item">
+            <div class="review-item-main">
+              <div class="review-item-meta">${escapeHtml(item.date)} · ${escapeHtml(item.source)} · <code>${escapeHtml(item.id)}</code></div>
+              <div class="review-item-text">${escapeHtml(item.headline)}</div>
+              <div class="review-item-flag">Flag: <strong>${escapeHtml(item.flag)}</strong></div>
+            </div>
+            <div class="review-item-actions">
+              <button class="btn primary" onclick="editFromReview('Announcements', '${escapeAttr(item.id)}')">Edit record</button>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>`;
+  }
+
+  // ── Group 3: Proposed deals ────────────────────────────────────────────
+  if (q.proposedDeals.length > 0 && showGroup('proposedDeals')) {
+    html += `<div class="review-group">
+      <div class="review-group-head">
+        <div class="review-group-title">Deals — Scraper-proposed, awaiting confirmation</div>
+        <div class="review-group-count">${q.proposedDeals.length}</div>
+      </div>
+      <div class="review-group-desc">Scraper drafted a new deal record. Open it, fill any missing fields (especially capital values, dates, project links), and change <code>confirmation_status</code> to <strong>Confirmed</strong> (or Disputed / delete the row).</div>
+      <div class="review-items">
+        ${q.proposedDeals.map(item => `
+          <div class="review-item">
+            <div class="review-item-main">
+              <div class="review-item-meta">${escapeHtml(item.type)} · ${escapeHtml(item.stage)} · Lead: ${escapeHtml(item.lead)} · <code>${escapeHtml(item.id)}</code></div>
+              <div class="review-item-text">${escapeHtml(item.name)}</div>
+            </div>
+            <div class="review-item-actions">
+              <button class="btn primary" onclick="editFromReview('Deals', '${escapeAttr(item.id)}')">Edit record</button>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>`;
+  }
+
+  wrap.innerHTML = html;
+}
+
+/* Switch which review group(s) are visible. 'all' or one of: medium | newEntities | proposedDeals */
+function setReviewFilter(filter) {
+  state.reviewFilter = filter;
+  renderReviewQueue();
+}
+
+/* Quick action: stage an edit that sets confidence=High on this announcement.
+   Available only for the Medium-confidence group. */
+function markReviewedMedium(id) {
+  const tbl = "Announcements";
+  const live = state.tables[tbl].find(r => r.announcement_id === id);
+  if (!live) return toast("Announcement not found: " + id, "error");
+
+  // Build the row exactly as it is, but with confidence flipped to High
+  const newRow = { ...live, confidence: "High" };
+
+  // If there's already a pending edit for this row, merge into it
+  const existingIdx = state.pending.findIndex(p => p.table === tbl && p.op === "edit" && p.id === id);
+  if (existingIdx >= 0) {
+    state.pending[existingIdx].row = { ...state.pending[existingIdx].row, confidence: "High" };
+  } else {
+    state.pending.push({ table: tbl, op: "edit", id, row: newRow });
+  }
+  savePending();
+  renderTabs();
+  renderTable();
+  renderPending();
+  toast(`Marked reviewed: ${id} (pending push)`, "success");
+}
+
+/* Switch to a specific table and open the edit modal for a given row.
+   Used by Review queue → Edit record. */
+function editFromReview(table, id) {
+  state.activeTable = table;
+  state.search = "";
+  document.getElementById("searchInput").value = "";
+  renderTabs();
+  renderTable();
+  // Open the modal after the table view has rendered
+  setTimeout(() => editRow(id), 30);
+}
+
+// ─── Table render ───────────────────────────────────────────────────────────
+
+function renderTable() {
+  // Special pseudo-tab: review queue
+  if (state.activeTable === "__review__") {
+    // Hide controls that don't apply
+    document.getElementById("searchInput").style.display = "none";
+    document.getElementById("addRowBtn").style.display = "none";
+    document.getElementById("exportBtn").style.display = "none";
+    renderReviewQueue();
+    return;
+  }
+  // Normal table view — restore controls
+  document.getElementById("searchInput").style.display = "";
+  document.getElementById("addRowBtn").style.display = "";
+  document.getElementById("exportBtn").style.display = "";
+
+  const wrap = document.getElementById("tableWrap");
+  const tbl = state.activeTable;
+  const cols = state.schemas[tbl] || [];
+  let rows = state.tables[tbl] || [];
+
+  // Apply search filter
+  if (state.search) {
+    const q = state.search.toLowerCase();
+    rows = rows.filter(r => Object.values(r).some(v => String(v || "").toLowerCase().includes(q)));
+  }
+
+  // Merge pending changes overlay
+  const idCol = state.idCols[tbl];
+  const pendingByID = {};
+  state.pending.forEach((p, idx) => {
+    if (p.table !== tbl) return;
+    const id = p.row[idCol] || (p.op === "edit" ? p.id : null);
+    if (id) pendingByID[id] = { ...p, idx };
+  });
+
+  // Pending-add rows that aren't yet in the live data
+  const liveIDs = new Set(rows.map(r => r[idCol]));
+  const pendingAdds = state.pending
+    .map((p, idx) => ({ ...p, idx }))
+    .filter(p => p.table === tbl && p.op === "add" && !liveIDs.has(p.row[idCol]));
+
+  document.getElementById("rowCountLabel").textContent = `${rows.length + pendingAdds.length} row(s)`;
+
+  if (rows.length + pendingAdds.length === 0) {
+    wrap.innerHTML = `<div class="empty-state"><div class="ico">∅</div>No rows match.</div>`;
+    return;
+  }
+
+  // Build the table — show only the first ~6 columns to fit. Add an actions col at the end.
+  const visibleCols = cols.slice(0, 7);
+
+  let html = "<table class='data'><thead><tr>";
+  visibleCols.forEach(c => html += `<th>${c}</th>`);
+  html += "<th></th></tr></thead><tbody>";
+
+  // Pending-add rows first
+  pendingAdds.forEach(p => {
+    html += `<tr class="pending-add">`;
+    visibleCols.forEach((c, i) => {
+      const v = p.row[c] || "";
+      const tag = i === 0 ? '<span class="pending-tag add">+ NEW</span>' : '';
+      html += `<td>${tag}${escapeHtml(v)}</td>`;
+    });
+    html += `<td class="actions"><button class="row-action-btn" onclick="editPending(${p.idx})">Edit</button> <button class="row-action-btn" onclick="discardOne(${p.idx})">Discard</button></td>`;
+    html += `</tr>`;
+  });
+
+  // Live rows
+  rows.forEach(row => {
+    const id = row[idCol];
+    const pending = pendingByID[id];
+    const cls = pending ? "pending-edit" : "";
+    html += `<tr class="${cls}">`;
+    visibleCols.forEach((c, i) => {
+      const v = pending ? pending.row[c] : row[c];
+      const tag = (pending && i === 0) ? '<span class="pending-tag edit">~ EDIT</span>' : '';
+      html += `<td>${tag}${escapeHtml(v || "")}</td>`;
+    });
+    html += `<td class="actions">`;
+    if (pending) {
+      html += `<button class="row-action-btn" onclick="editPending(${pending.idx})">View</button> <button class="row-action-btn" onclick="discardOne(${pending.idx})">Discard</button>`;
+    } else {
+      html += `<button class="row-action-btn" onclick="editRow('${id}')">Edit</button>`;
+    }
+    html += `</td></tr>`;
+  });
+
+  html += "</tbody></table>";
+  wrap.innerHTML = html;
+}
+
+function escapeHtml(s) {
+  return String(s || "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[ch]);
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+// ─── Modal: add/edit row ────────────────────────────────────────────────────
+
+function openAddModal() {
+  state.modal.editingId = null;
+  const tbl = state.activeTable;
+  document.getElementById("modalTitle").textContent = `Add new ${tbl} row`;
+  renderModalBody({});
+  document.getElementById("modalBackdrop").classList.add("open");
+}
+
+function editRow(id) {
+  const tbl = state.activeTable;
+  const row = state.tables[tbl].find(r => r[state.idCols[tbl]] === id);
+  if (!row) return toast("Row not found: " + id, "error");
+  state.modal.editingId = id;
+  document.getElementById("modalTitle").textContent = `Edit ${tbl} · ${id}`;
+  renderModalBody({...row});
+  document.getElementById("modalBackdrop").classList.add("open");
+}
+
+function editPending(idx) {
+  const p = state.pending[idx];
+  state.modal.editingId = p.op === "edit" ? p.id : null;
+  state.modal.pendingIdx = idx;
+  const tbl = state.activeTable;
+  const title = p.op === "add" ? `Edit pending add · ${tbl}` : `View pending edit · ${tbl} · ${p.id}`;
+  document.getElementById("modalTitle").textContent = title;
+  renderModalBody({...p.row});
+  document.getElementById("modalBackdrop").classList.add("open");
+}
+
+function closeModal() {
+  document.getElementById("modalBackdrop").classList.remove("open");
+  state.modal.editingId = null;
+  state.modal.pendingIdx = null;
+}
+
+function renderModalBody(values) {
+  const tbl = state.activeTable;
+  const cols = state.schemas[tbl];
+  const body = document.getElementById("modalBody");
+
+  // FK columns by table — these get the multi-select with reference data
+  const FK_MAP = {
+    "Reactor Units":  { site_id: "Sites" },
+    "Projects":       { linked_unit_ids: "Reactor Units", context_ids: "Context Items" },
+    "Deals":          { project_ids: "Projects", context_ids: "Context Items" },
+    "Context Items":  { promoted_to_project_id: "Projects" },
+    "Announcements":  { site_ids: "Sites", unit_ids: "Reactor Units", project_ids: "Projects", deal_ids: "Deals", context_ids: "Context Items" },
+  };
+  const fks = FK_MAP[tbl] || {};
+
+  // Multi-value vocab fields: comma-separated values from a controlled list
+  // Each entry maps the column → which vocab key to use as the source list.
+  const MULTI_VOCAB_MAP = {
+    "Context Items": { relevant_layers: "layer" },
+  };
+  const multiVocabs = MULTI_VOCAB_MAP[tbl] || {};
+
+  // Pair columns into the grid
+  let html = "";
+  cols.forEach((col, i) => {
+    const val = values[col] || "";
+    const isMultiline = ["notes", "summary", "raw_body"].includes(col);
+    const isLongText = isMultiline || col === "headline" || col === "deal_name" || col === "project_name" || col === "context_name" || col === "site_name";
+    const isFK = !!fks[col];
+    const isMultiVocab = !!multiVocabs[col];
+    const vocab = state.vocabs[col];
+    const isDate = col.includes("date") || col.endsWith("_as_of") || col.endsWith("_expiration");
+    const isNumber = col.endsWith("_usd") || col.endsWith("_mw") || col.endsWith("_mwe") || col.endsWith("_mwt") || col === "term_years" || col === "latitude" || col === "longitude";
+    const required = ["site_id","unit_id","project_id","deal_id","context_id","announcement_id"].includes(col) || col === "site_name" || col === "project_name";
+
+    const labelHTML = `<label for="f-${col}">${col}${required ? '<span class="required">*</span>' : ''}</label>`;
+
+    html += `<div class="field" style="${isLongText || isFK || isMultiVocab ? '' : 'display:inline-block; width:48%; margin-right:1%;'}">`;
+    html += labelHTML;
+
+    if (isFK) {
+      const targetTable = fks[col];
+      html += `<div class="fk-multiselect" data-col="${col}" data-target="${targetTable}">`;
+      const ids = String(val).split(",").map(s => s.trim()).filter(Boolean);
+      ids.forEach(id => {
+        html += `<span class="fk-tag" data-id="${escapeHtml(id)}">${escapeHtml(id)}<span class="remove" onclick="removeFk(this)">×</span></span>`;
+      });
+      html += `<input class="fk-input" placeholder="${ids.length ? 'add another...' : 'search ' + targetTable + '...'}" oninput="onFkInput(event)" onfocus="onFkInput(event)" onblur="setTimeout(()=>hideFkDropdown(),200)" />`;
+      html += `</div>`;
+      html += `<div class="hint">Foreign keys from ${targetTable}. Type to search; click to add.</div>`;
+    } else if (isMultiVocab) {
+      const vocabKey = multiVocabs[col];
+      const options = state.vocabs[vocabKey] || [];
+      html += `<div class="fk-multiselect" data-col="${col}" data-vocab="${vocabKey}">`;
+      const selected = String(val).split(",").map(s => s.trim()).filter(Boolean);
+      selected.forEach(v => {
+        html += `<span class="fk-tag" data-id="${escapeHtml(v)}">${escapeHtml(v)}<span class="remove" onclick="removeFk(this)">×</span></span>`;
+      });
+      html += `<input class="fk-input" placeholder="${selected.length ? 'add another...' : 'pick ' + col + '...'}" oninput="onMultiVocabInput(event)" onfocus="onMultiVocabInput(event)" onblur="setTimeout(()=>hideFkDropdown(),200)" />`;
+      html += `</div>`;
+      html += `<div class="hint">Multiple values allowed. Click to add.</div>`;
+    } else if (vocab) {
+      html += `<select id="f-${col}">`;
+      html += `<option value="">(none)</option>`;
+      vocab.forEach(v => html += `<option value="${escapeHtml(v)}" ${v === val ? 'selected' : ''}>${escapeHtml(v)}</option>`);
+      html += `</select>`;
+    } else if (isMultiline) {
+      html += `<textarea id="f-${col}">${escapeHtml(val)}</textarea>`;
+    } else if (isDate) {
+      html += `<input type="text" id="f-${col}" value="${escapeHtml(val)}" placeholder="YYYY-MM-DD or YYYY-MM or YYYY" />`;
+    } else if (isNumber) {
+      html += `<input type="number" id="f-${col}" value="${escapeHtml(val)}" step="any" />`;
+    } else {
+      html += `<input type="text" id="f-${col}" value="${escapeHtml(val)}" />`;
+    }
+    html += `</div>`;
+  });
+
+  body.innerHTML = html;
+
+  // Auto-suggest ID for new rows
+  if (!state.modal.editingId && state.modal.pendingIdx == null) {
+    const tbl = state.activeTable;
+    const idCol = state.idCols[tbl];
+    const idInput = document.getElementById(`f-${idCol}`);
+    if (idInput && !idInput.value) {
+      // For Announcements, auto-pick next sequential ID
+      if (tbl === "Announcements") {
+        idInput.value = nextSequentialId("ann_", state.tables[tbl], "announcement_id");
+      } else if (tbl === "Deals") {
+        idInput.value = nextSequentialId("deal_", state.tables[tbl], "deal_id");
+      } else {
+        // For reference tables, suggest from name field
+        const nameCol = cols.find(c => c.endsWith("_name"));
+        if (nameCol) {
+          const nameInput = document.getElementById(`f-${nameCol}`);
+          if (nameInput) {
+            nameInput.oninput = () => {
+              if (!idInput.value || idInput.dataset.auto === "true") {
+                idInput.value = slugify(nameInput.value);
+                idInput.dataset.auto = "true";
+              }
+            };
+          }
+        }
+      }
+    }
+  }
+}
+
+function nextSequentialId(prefix, rows, col) {
+  let max = 0;
+  rows.forEach(r => {
+    const m = String(r[col] || "").match(new RegExp(`^${prefix}(\\d+)$`));
+    if (m) max = Math.max(max, parseInt(m[1]));
+  });
+  // Also check pending
+  state.pending.forEach(p => {
+    const m = String(p.row[col] || "").match(new RegExp(`^${prefix}(\\d+)$`));
+    if (m) max = Math.max(max, parseInt(m[1]));
+  });
+  return prefix + String(max + 1).padStart(4, "0");
+}
+
+function slugify(s) {
+  return String(s).toLowerCase()
+    .replace(/['"]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 50);
+}
+
+// ─── FK multi-select picker ─────────────────────────────────────────────────
+
+function onFkInput(ev) {
+  const input = ev.target;
+  const wrap = input.parentElement;
+  const targetTable = wrap.dataset.target;
+  const query = input.value.toLowerCase();
+
+  hideFkDropdown();
+
+  const refData = (state.tables[targetTable] || []).concat(
+    state.pending.filter(p => p.table === targetTable && p.op === "add").map(p => p.row)
+  );
+
+  const idCol = state.idCols[targetTable];
+  const nameCol = state.schemas[targetTable].find(c => c.endsWith("_name") || c === "headline") || idCol;
+
+  // Already-selected IDs
+  const selected = new Set(Array.from(wrap.querySelectorAll(".fk-tag")).map(t => t.dataset.id));
+
+  // Filter ref data
+  const matches = refData
+    .filter(r => !selected.has(r[idCol]))
+    .filter(r => {
+      if (!query) return true;
+      const hay = (r[idCol] + " " + (r[nameCol] || "")).toLowerCase();
+      return hay.includes(query);
+    })
+    .slice(0, 20);
+
+  if (matches.length === 0 && query) return;
+
+  const dropdown = document.createElement("div");
+  dropdown.className = "fk-dropdown";
+  dropdown.id = "fkDropdown";
+  matches.forEach((m, i) => {
+    const opt = document.createElement("div");
+    opt.className = "fk-option";
+    opt.innerHTML = `<div><strong>${escapeHtml(m[idCol])}</strong></div><div class="meta">${escapeHtml(m[nameCol] || "")}</div>`;
+    opt.onmousedown = (e) => {
+      e.preventDefault();
+      const tag = document.createElement("span");
+      tag.className = "fk-tag";
+      tag.dataset.id = m[idCol];
+      tag.innerHTML = `${escapeHtml(m[idCol])}<span class="remove" onclick="removeFk(this)">×</span>`;
+      wrap.insertBefore(tag, input);
+      input.value = "";
+      hideFkDropdown();
+      input.focus();
+    };
+    dropdown.appendChild(opt);
+  });
+
+  // Position near input
+  const rect = input.getBoundingClientRect();
+  dropdown.style.position = "fixed";
+  dropdown.style.left = rect.left + "px";
+  dropdown.style.top = (rect.bottom + 4) + "px";
+  document.body.appendChild(dropdown);
+}
+
+function hideFkDropdown() {
+  const d = document.getElementById("fkDropdown");
+  if (d) d.remove();
+}
+
+function removeFk(el) {
+  el.parentElement.remove();
+}
+
+// Multi-vocab picker: like FK picker, but options come from a controlled vocabulary
+// rather than a foreign reference table. Used for fields like Context Items.relevant_layers.
+function onMultiVocabInput(ev) {
+  const input = ev.target;
+  const wrap = input.parentElement;
+  const vocabKey = wrap.dataset.vocab;
+  const options = state.vocabs[vocabKey] || [];
+  const query = input.value.toLowerCase();
+
+  hideFkDropdown();
+
+  const selected = new Set(Array.from(wrap.querySelectorAll(".fk-tag")).map(t => t.dataset.id));
+  const matches = options
+    .filter(v => !selected.has(v))
+    .filter(v => !query || v.toLowerCase().includes(query));
+
+  if (matches.length === 0) return;
+
+  const dropdown = document.createElement("div");
+  dropdown.className = "fk-dropdown";
+  dropdown.id = "fkDropdown";
+  matches.forEach(v => {
+    const opt = document.createElement("div");
+    opt.className = "fk-option";
+    opt.innerHTML = `<div><strong>${escapeHtml(v)}</strong></div>`;
+    opt.onmousedown = (e) => {
+      e.preventDefault();
+      const tag = document.createElement("span");
+      tag.className = "fk-tag";
+      tag.dataset.id = v;
+      tag.innerHTML = `${escapeHtml(v)}<span class="remove" onclick="removeFk(this)">×</span>`;
+      wrap.insertBefore(tag, input);
+      input.value = "";
+      hideFkDropdown();
+      input.focus();
+    };
+    dropdown.appendChild(opt);
+  });
+
+  const rect = input.getBoundingClientRect();
+  dropdown.style.position = "fixed";
+  dropdown.style.left = rect.left + "px";
+  dropdown.style.top = (rect.bottom + 4) + "px";
+  document.body.appendChild(dropdown);
+}
+
+// ─── Save the modal row ─────────────────────────────────────────────────────
+
+function saveModalRow() {
+  const tbl = state.activeTable;
+  const cols = state.schemas[tbl];
+  const idCol = state.idCols[tbl];
+
+  // Gather values
+  const row = {};
+  cols.forEach(col => {
+    const inp = document.getElementById(`f-${col}`);
+    if (inp) {
+      row[col] = inp.value || "";
+    } else {
+      // FK multi-select
+      const wrap = document.querySelector(`.fk-multiselect[data-col="${col}"]`);
+      if (wrap) {
+        const ids = Array.from(wrap.querySelectorAll(".fk-tag")).map(t => t.dataset.id);
+        row[col] = ids.join(",");
+      } else {
+        row[col] = "";
+      }
+    }
+  });
+
+  // Validate ID
+  if (!row[idCol]) {
+    return toast(`Missing required field: ${idCol}`, "error");
+  }
+
+  // Determine op: add vs edit
+  let op, change;
+  if (state.modal.pendingIdx != null) {
+    // Updating an existing pending change
+    const existing = state.pending[state.modal.pendingIdx];
+    change = { ...existing, row };
+    state.pending[state.modal.pendingIdx] = change;
+  } else if (state.modal.editingId) {
+    // Edit of a live row
+    change = { table: tbl, op: "edit", id: state.modal.editingId, row };
+    state.pending.push(change);
+  } else {
+    // New add
+    // Check for ID collision with live data
+    const exists = state.tables[tbl].some(r => r[idCol] === row[idCol]);
+    if (exists) {
+      return toast(`ID ${row[idCol]} already exists in ${tbl}`, "error");
+    }
+    change = { table: tbl, op: "add", row };
+    state.pending.push(change);
+  }
+
+  savePending();
+  renderTable();
+  renderPending();
+  closeModal();
+  toast(`Saved locally (${state.pending.length} pending)`, "success");
+}
+
+// ─── Pending drawer ─────────────────────────────────────────────────────────
+
+function openDrawer() {
+  document.getElementById("drawerBackdrop").classList.add("open");
+  document.getElementById("drawer").classList.add("open");
+}
+
+function closeDrawer() {
+  document.getElementById("drawerBackdrop").classList.remove("open");
+  document.getElementById("drawer").classList.remove("open");
+}
+
+function renderPending() {
+  const badge = document.getElementById("pendingBadge");
+  const count = state.pending.length;
+  document.getElementById("pendingCount").textContent = count;
+  if (count === 0) badge.classList.add("zero");
+  else            badge.classList.remove("zero");
+
+  const body = document.getElementById("drawerBody");
+  if (count === 0) {
+    body.innerHTML = `<div class="empty-state"><div class="ico">✓</div>No pending changes.</div>`;
+    document.getElementById("pushBtn").disabled = true;
+    document.getElementById("discardAllBtn").disabled = true;
+    return;
+  }
+  document.getElementById("pushBtn").disabled = false;
+  document.getElementById("discardAllBtn").disabled = false;
+
+  let html = "";
+  state.pending.forEach((p, idx) => {
+    const idCol = state.idCols[p.table];
+    const id = p.op === "edit" ? p.id : p.row[idCol];
+    const nameCol = state.schemas[p.table].find(c => c.endsWith("_name") || c === "headline") || idCol;
+    const name = p.row[nameCol] || "";
+    html += `<div class="pending-item">`;
+    html += `<span class="op-tag ${p.op}">${p.op}</span>`;
+    html += `<span class="table-name">${p.table}</span>`;
+    html += `<div class="summary"><strong>${escapeHtml(id)}</strong> · ${escapeHtml(name)}</div>`;
+    html += `<div class="actions">`;
+    html += `<button class="btn" onclick="goToPending(${idx})">View</button>`;
+    html += `<button class="btn danger" onclick="discardOne(${idx})">Discard</button>`;
+    html += `</div></div>`;
+  });
+  body.innerHTML = html;
+}
+
+function goToPending(idx) {
+  const p = state.pending[idx];
+  state.activeTable = p.table;
+  renderTabs();
+  renderTable();
+  closeDrawer();
+  editPending(idx);
+}
+
+function discardOne(idx) {
+  if (!confirm("Discard this pending change?")) return;
+  state.pending.splice(idx, 1);
+  savePending();
+  renderTable();
+  renderPending();
+  toast("Discarded 1 change", "warn");
+}
+
+function discardAll() {
+  if (!confirm(`Discard all ${state.pending.length} pending changes?`)) return;
+  state.pending = [];
+  savePending();
+  renderTable();
+  renderPending();
+  toast("Discarded all pending changes", "warn");
+}
+
+// ─── Push to Sheet ──────────────────────────────────────────────────────────
+
+function confirmPush() {
+  if (state.pending.length === 0) return;
+  // Group summary
+  const byTable = {};
+  state.pending.forEach(p => {
+    const key = `${p.table} (${p.op})`;
+    byTable[key] = (byTable[key] || 0) + 1;
+  });
+  let html = `<div class="confirm-summary">About to push <strong>${state.pending.length}</strong> change(s) to the live Sheet.</div>`;
+  html += `<ul class="confirm-list">`;
+  state.pending.forEach(p => {
+    const idCol = state.idCols[p.table];
+    const id = p.op === "edit" ? p.id : p.row[idCol];
+    const nameCol = state.schemas[p.table].find(c => c.endsWith("_name") || c === "headline") || idCol;
+    const name = p.row[nameCol] || "";
+    html += `<li><strong>${p.op.toUpperCase()}</strong> · ${p.table} · ${escapeHtml(id)} — ${escapeHtml(name)}</li>`;
+  });
+  html += `</ul>`;
+  document.getElementById("confirmBody").innerHTML = html;
+  document.getElementById("confirmBackdrop").classList.add("open");
+}
+
+function closeConfirm() {
+  document.getElementById("confirmBackdrop").classList.remove("open");
+}
+
+async function executePush() {
+  const btn = document.getElementById("pushNowBtn");
+  btn.disabled = true;
+  btn.textContent = "Pushing...";
+  try {
+    const r = await fetch(`${API}/api/push`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ changes: state.pending }),
+    });
+    const d = await r.json();
+    if (d.applied > 0) {
+      toast(`Applied ${d.applied} change(s) to Sheet`, "success");
+    }
+    if (d.errors && d.errors.length > 0) {
+      console.error("Push errors:", d.errors);
+      toast(`${d.errors.length} change(s) failed — see console`, "error");
+    }
+    // Keep failed changes in pending; remove successful ones
+    const failed = new Set();
+    d.results.forEach((res, idx) => { if (!res.ok) failed.add(idx); });
+    state.pending = state.pending.filter((_, idx) => failed.has(idx));
+    savePending();
+    renderPending();
+    closeConfirm();
+    closeDrawer();
+    // Reload tables to reflect new state
+    await loadTables();
+  } catch (e) {
+    toast("Push failed: " + e.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Push now";
+  }
+}
+
+// ─── Export ─────────────────────────────────────────────────────────────────
+
+function exportExcel() {
+  window.location.href = `${API}/api/export`;
+  toast("Downloading Excel export...", "success");
+}
+
+// ─── Reload ─────────────────────────────────────────────────────────────────
+
+async function reloadFromSheet() {
+  await loadTables();
+}
+
+// ─── Toast ──────────────────────────────────────────────────────────────────
+
+function toast(msg, kind = "") {
+  const c = document.getElementById("toastContainer");
+  const t = document.createElement("div");
+  t.className = "toast " + kind;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity 0.3s"; }, 2700);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ─── Wire up ────────────────────────────────────────────────────────────────
+
+document.getElementById("addRowBtn").onclick = openAddModal;
+document.getElementById("exportBtn").onclick = exportExcel;
+document.getElementById("reloadBtn").onclick = reloadFromSheet;
+document.getElementById("searchInput").oninput = (e) => { state.search = e.target.value; renderTable(); };
+
+// Initial connect + load
+(async () => {
+  const ok = await checkConnection();
+  if (ok) await loadTables();
+  // Re-check every 30s
+  setInterval(checkConnection, 30000);
+})();
+
+</script>
+</body>
+</html>

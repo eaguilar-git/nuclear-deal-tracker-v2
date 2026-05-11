@@ -1,0 +1,4208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nuclear Deal Tracker · EFI Foundation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --navy-900: #05152e;
+  --navy-700: #0a2a5a;
+  --navy-500: #0d3878;
+  --navy-300: #1a5fa8;
+  --navy-200: #5aabff;
+  --navy-100: #a8c4e0;
+  --navy-50:  #e8f0fb;
+  --slate-900: #1a2840;
+  --slate-700: #3a5268;
+  --slate-500: #5f5e5a;
+  --slate-300: #8a9db5;
+  --slate-200: #b4b2a9;
+  --bg:        #f4f7fa;
+  --bg-soft:   #f7fafc;
+  --bg-row:    #fafbfc;
+  --white:     #FFFFFF;
+  --border:    #dce8f0;
+  --border-soft: #e8eef3;
+  --warn-bg:   #fee2e2;
+  --warn-text: #b91c1c;
+
+  --green-bg:  #e6f4ec;
+  --green-fg:  #1e6b3c;
+  --orange-bg: #fef0e0;
+  --orange-fg: #7b3f00;
+  --amber-bg:  #fef3c7;
+  --amber-fg:  #854f0b;
+  --blue-bg:   #e6f1fb;
+  --blue-fg:   #0c447c;
+  --purple-bg: #eee5fa;
+  --purple-fg: #26215C;
+  --pink-bg:   #fbeaf0;
+  --pink-fg:   #72243e;
+  --slate-bg:  #f0f0f0;
+  --slate-fg:  #555;
+  --statepol-bg: #f4eafb;
+  --statepol-fg: #6b3080;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--slate-900);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--navy-300); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { font-family: inherit; }
+
+/* NAV */
+nav.topnav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 24px;
+  background: var(--white);
+  border-bottom: 0.5px solid var(--border);
+  position: sticky; top: 0; z-index: 50;
+}
+.nav-logo { display: flex; align-items: center; gap: 10px; }
+.nav-icon {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #0a3060;
+  display: flex; align-items: center; justify-content: center;
+  color: #FFFFFF; font-size: 13px;
+}
+.nav-title {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+  color: var(--navy-300); text-transform: uppercase;
+}
+.nav-sub {
+  font-size: 9px; letter-spacing: 0.1em;
+  color: var(--slate-300); text-transform: uppercase;
+}
+.nav-right { display: flex; align-items: center; gap: 14px; }
+.nav-tabs { display: flex; gap: 2px; background: var(--bg); border-radius: 6px; padding: 3px; }
+.nav-tab {
+  padding: 5px 14px; border-radius: 4px;
+  font-size: 12px; font-weight: 600;
+  background: transparent; color: var(--slate-300);
+  border: none; cursor: pointer;
+  transition: all 0.15s;
+}
+.nav-tab.active { background: var(--white); color: var(--navy-300); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.review-badge {
+  background: var(--warn-bg); color: var(--warn-text);
+  font-size: 10px; font-weight: 600;
+  padding: 3px 10px; border-radius: 99px;
+  cursor: pointer;
+}
+.review-badge.zero { background: var(--bg); color: var(--slate-300); cursor: default; }
+
+/* HERO */
+.hero {
+  background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-700) 55%, var(--navy-500) 100%);
+  padding: 28px 24px 24px;
+  color: var(--white);
+}
+.hero-eyebrow {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em;
+  color: var(--navy-200); font-weight: 600; margin-bottom: 4px;
+}
+.hero-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 26px; line-height: 1.2; font-weight: 600;
+  margin: 0 0 6px;
+}
+.hero-sub { font-size: 12px; color: var(--navy-100); margin-bottom: 14px; max-width: 560px; }
+.hero-orient {
+  font-size: 12px; line-height: 1.55; color: var(--navy-100);
+  background: rgba(255,255,255,0.05);
+  border-left: 2px solid var(--navy-200);
+  padding: 10px 14px;
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 18px;
+}
+.hero-orient strong { color: #fff; font-weight: 600; }
+
+.kpi-tier-label {
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--navy-200); font-weight: 600; margin-bottom: 6px;
+}
+.kpi-tier-label .tier-sub {
+  text-transform: none; letter-spacing: 0;
+  font-weight: 400; color: var(--navy-100);
+  font-size: 11px;
+  margin-left: 2px;
+}
+.kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 14px; }
+.kpi-row:last-child { margin-bottom: 0; }
+.kpi-card {
+  background: rgba(255,255,255,0.07);
+  border: 0.5px solid rgba(255,255,255,0.13);
+  border-radius: 8px;
+  padding: 10px 12px;
+  transition: background 0.15s;
+}
+.kpi-card.clickable { cursor: pointer; }
+.kpi-card.clickable:hover { background: rgba(255,255,255,0.12); }
+.kpi-label {
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em;
+  color: #7a9abf; font-weight: 600; margin-bottom: 4px;
+}
+.kpi-value-row { display: flex; align-items: baseline; gap: 6px; }
+.kpi-value {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 22px; font-weight: 600; color: var(--white); line-height: 1;
+}
+.kpi-unit { font-size: 11px; color: var(--navy-100); }
+.kpi-sub { font-size: 10px; color: #7a9abf; margin-top: 3px; }
+.kpi-sub-link { color: var(--navy-200); cursor: pointer; }
+.kpi-sub-link:hover { text-decoration: underline; }
+
+/* CONTENT */
+.content { padding: 18px 24px; min-height: 60vh; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* PANELS */
+.panel {
+  background: var(--white);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+.panel-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 12px;
+}
+.panel-title { font-size: 13px; font-weight: 600; color: var(--slate-900); }
+.panel-subtitle { font-size: 11px; color: var(--slate-300); margin-top: 2px; }
+.panel-explainer { font-size: 11px; color: var(--slate-500); margin-top: 6px; font-style: italic; }
+.panel-link { font-size: 10px; color: var(--navy-300); cursor: pointer; }
+.panel-link:hover { text-decoration: underline; }
+
+/* SECTION HEADER (used inside detail views) */
+.section-label {
+  font-size: 11px; letter-spacing: 0.12em;
+  color: var(--slate-300); font-weight: 600;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+
+/* BREAKDOWN PANEL */
+.breakdown-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.breakdown-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 12px 14px 10px;
+  background: #fcfcfd;
+}
+.bd-col-label {
+  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--slate-300); font-weight: 600; margin-bottom: 8px;
+}
+.bd-col-label .bd-col-hint {
+  text-transform: none; letter-spacing: 0; font-weight: 400;
+  color: var(--slate-500); font-size: 10px; margin-left: 2px;
+}
+.bd-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; padding: 3px 0;
+  cursor: pointer; border-radius: 4px;
+}
+.bd-row:hover { background: var(--bg-soft); }
+.bd-row-static { cursor: default; }
+.bd-row-static:hover { background: transparent; }
+.bd-tag-cell { width: 145px; flex-shrink: 0; }
+.bd-bar-bg {
+  flex: 1; background: #f0f4f8;
+  border-radius: 99px; height: 6px;
+  overflow: hidden;
+}
+.bd-bar-fill { height: 100%; border-radius: 99px; }
+.bd-count { color: var(--slate-500); width: 50px; text-align: right; font-size: 11px; }
+.bd-units { color: var(--slate-900); font-weight: 600; width: 60px; text-align: right; font-size: 11px; }
+.bd-total {
+  border-top: 1px solid #e2e8f0;
+  margin-top: 8px; padding-top: 8px;
+  display: flex; justify-content: space-between;
+  font-size: 11px; font-weight: 600; color: var(--slate-900);
+}
+.bd-total .bd-total-label { color: var(--slate-500); font-weight: 500; }
+
+/* TAG BADGES */
+.tag {
+  display: inline-block;
+  font-size: 10px; padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.tag-extension { background: var(--green-bg); color: var(--green-fg); }
+.tag-restart { background: var(--orange-bg); color: var(--orange-fg); }
+.tag-uprate { background: var(--amber-bg); color: var(--amber-fg); }
+.tag-newlarge { background: var(--blue-bg); color: var(--blue-fg); }
+.tag-newsmr { background: var(--purple-bg); color: var(--purple-fg); }
+.tag-fuelcycle { background: var(--pink-bg); color: var(--pink-fg); }
+.tag-federal { background: var(--slate-bg); color: var(--slate-fg); }
+.tag-statepol { background: var(--statepol-bg); color: var(--statepol-fg); }
+.tag-hyperscaler { background: var(--pink-bg); color: var(--pink-fg); }
+.tag-stage { background: var(--blue-bg); color: var(--blue-fg); }
+.tag-status-active { background: var(--green-bg); color: var(--green-fg); }
+.tag-status-paused { background: var(--amber-bg); color: var(--amber-fg); }
+.tag-status-shutdown { background: var(--slate-bg); color: var(--slate-fg); }
+.tag-status-decom { background: var(--slate-bg); color: var(--slate-fg); }
+.tag-status-operating { background: var(--green-bg); color: var(--green-fg); }
+.tag-status-planned { background: var(--blue-bg); color: var(--blue-fg); }
+.tag-status-construction { background: var(--amber-bg); color: var(--amber-fg); }
+.tag-confirmed { background: var(--green-bg); color: var(--green-fg); }
+.tag-proposed { background: var(--amber-bg); color: var(--amber-fg); }
+.tag-scope { background: var(--slate-bg); color: var(--slate-fg); }
+
+/* FILTER PANEL */
+.filter-top {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 14px; margin-bottom: 12px;
+}
+.filter-label-text {
+  font-size: 10px; letter-spacing: 0.12em;
+  color: var(--slate-300); font-weight: 600;
+  text-transform: uppercase; white-space: nowrap;
+}
+.search-wrap {
+  position: relative; flex: 1; max-width: 380px;
+}
+.search-input {
+  width: 100%;
+  padding: 6px 10px 6px 28px;
+  border: 0.5px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="%238a9db5" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4-4"/></svg>') no-repeat 8px center;
+}
+.search-input:focus { outline: none; border-color: var(--navy-300); box-shadow: 0 0 0 3px rgba(26,95,168,0.1); }
+.btn { padding: 5px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; font-family: inherit; }
+.btn-reset { border: 0.5px solid var(--border); color: var(--slate-500); background: transparent; }
+.btn-reset:hover { background: var(--bg); }
+.btn-primary { border: 0.5px solid var(--navy-300); color: var(--white); background: var(--navy-300); }
+.btn-primary:hover { background: var(--navy-500); border-color: var(--navy-500); }
+
+.filter-grid {
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  gap: 8px; margin-bottom: 12px;
+}
+.filter-item label {
+  font-size: 9px; letter-spacing: 0.1em;
+  color: var(--slate-300); font-weight: 600;
+  display: block; margin-bottom: 3px;
+  text-transform: uppercase;
+}
+.ms-trigger {
+  width: 100%; padding: 5px 8px;
+  border: 0.5px solid var(--border);
+  border-radius: 6px;
+  font-size: 11px;
+  background: var(--white);
+  text-align: left;
+  display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer;
+  font-family: inherit;
+}
+.ms-trigger:hover { border-color: var(--slate-300); }
+.ms-trigger-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-trigger-arrow { color: var(--slate-300); margin-left: 6px; }
+.ms-wrap { position: relative; }
+.ms-dropdown {
+  position: absolute; top: 100%; left: 0; right: 0;
+  background: var(--white);
+  border: 0.5px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  margin-top: 2px;
+  max-height: 240px; overflow-y: auto;
+  z-index: 30;
+  display: none;
+  padding: 4px 0;
+}
+.ms-wrap.open .ms-dropdown { display: block; }
+.ms-search-wrap {
+  position: sticky; top: 0;
+  background: var(--white);
+  padding: 6px 8px;
+  border-bottom: 0.5px solid var(--border);
+  z-index: 1;
+}
+.ms-search-input {
+  width: 100%;
+  padding: 4px 8px;
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.ms-search-input:focus { outline: none; border-color: var(--navy-300); }
+.ms-option {
+  padding: 5px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+}
+.ms-option:hover { background: var(--bg); }
+.ms-option input { margin: 0; cursor: pointer; }
+
+.filter-row2 {
+  display: flex; align-items: center; gap: 14px;
+  font-size: 11px; flex-wrap: wrap;
+}
+.date-group { display: flex; gap: 8px; align-items: flex-end; }
+.date-group label {
+  font-size: 9px; letter-spacing: 0.1em;
+  color: var(--slate-300); font-weight: 600;
+  display: block; margin-bottom: 3px;
+  text-transform: uppercase;
+}
+.date-group input {
+  padding: 4px 6px;
+  border: 0.5px solid var(--border);
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: inherit;
+}
+.date-presets { display: flex; gap: 4px; align-items: stretch; margin-left: 4px; }
+.date-preset-btn {
+  font-size: 10px; padding: 4px 8px;
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--slate-500);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.date-preset-btn:hover { background: var(--bg-soft); border-color: var(--navy-300); color: var(--slate-900); }
+.date-preset-btn.active {
+  background: var(--navy-300);
+  color: #fff;
+  border-color: var(--navy-300);
+}
+.toggle-wrap { display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--slate-700); }
+.toggle-track {
+  display: inline-block;
+  width: 24px; height: 14px;
+  background: var(--border);
+  border-radius: 99px;
+  position: relative;
+  transition: background 0.15s;
+}
+.toggle-thumb {
+  display: block;
+  width: 10px; height: 10px;
+  background: var(--white);
+  border-radius: 50%;
+  position: absolute;
+  top: 2px; left: 2px;
+  transition: left 0.15s;
+}
+.toggle-wrap input { display: none; }
+.toggle-wrap input:checked ~ .toggle-track { background: var(--navy-300); }
+.toggle-wrap input:checked ~ .toggle-track .toggle-thumb { left: 12px; }
+
+/* TABLE */
+.table-wrap {
+  background: var(--white);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.table-toolbar {
+  padding: 10px 18px;
+  border-bottom: 0.5px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; color: var(--slate-300);
+}
+.col-heads {
+  display: grid;
+  padding: 8px 18px;
+  background: var(--bg);
+  border-bottom: 0.5px solid var(--border);
+  font-size: 10px; letter-spacing: 0.08em;
+  color: var(--slate-300); font-weight: 600;
+  text-transform: uppercase;
+}
+.col-head { cursor: pointer; user-select: none; }
+.col-head.sorted { color: var(--navy-300); }
+.col-head:hover { color: var(--slate-700); }
+.col-head.sorted:hover { color: var(--navy-300); }
+.sort-arrow { font-size: 10px; opacity: 0.6; }
+
+.feed-row {
+  display: grid;
+  padding: 10px 18px;
+  border-bottom: 0.5px solid var(--border);
+  font-size: 12px; align-items: start;
+  cursor: pointer;
+}
+.feed-row:hover { background: var(--bg-soft); }
+.feed-row.alt { background: var(--bg-row); }
+.feed-row.alt:hover { background: var(--bg-soft); }
+.feed-row.expanded { background: var(--bg-soft); }
+.feed-row .col-date { color: var(--slate-700); padding-top: 1px; font-variant-numeric: tabular-nums; white-space: normal; overflow-wrap: break-word; }
+.feed-row .col-summary { color: var(--slate-900); line-height: 1.45; word-break: normal; overflow-wrap: anywhere; }
+.feed-row .col-tags { display: flex; flex-wrap: wrap; gap: 3px; align-items: flex-start; }
+.feed-row .col-source { color: var(--slate-500); font-size: 11px; padding-top: 1px; word-break: break-word; overflow-wrap: anywhere; }
+.feed-row .col-source .source-link {
+  color: var(--navy-300); text-decoration: none;
+  border-bottom: 1px dotted var(--navy-200);
+  cursor: pointer; transition: color 0.12s;
+  display: inline-block; word-break: break-word;
+}
+.feed-row .col-source .source-link:hover {
+  color: var(--navy-700); border-bottom-color: var(--navy-700);
+}
+.feed-row .col-menu { text-align: center; color: var(--slate-300); padding-top: 1px; }
+.feed-row .linked-to { word-break: normal; overflow-wrap: anywhere; }
+.feed-row .linked-to .entity-link {
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+/* Pagination bar */
+.pagination-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  border-top: 0.5px solid var(--border);
+  background: var(--bg-soft);
+  font-size: 11px;
+  color: var(--slate-500);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.pagination-info { font-variant-numeric: tabular-nums; }
+.pagination-controls { display: flex; gap: 4px; }
+.page-btn {
+  font-size: 11px; padding: 4px 10px;
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--slate-700);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.12s;
+}
+.page-btn:hover:not(:disabled) {
+  background: var(--navy-300); color: #fff; border-color: var(--navy-300);
+}
+.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pagination-size {
+  display: flex; align-items: center; gap: 6px;
+}
+.pagination-size select {
+  font-size: 11px; padding: 3px 6px;
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  font-family: inherit;
+  background: #fff;
+}
+
+.feed-detail {
+  padding: 12px 22px 18px;
+  background: var(--bg-soft);
+  border-bottom: 0.5px solid var(--border);
+  font-size: 12px;
+  display: none;
+}
+.feed-detail.open { display: block; }
+.detail-section { margin-bottom: 12px; }
+.detail-section:last-child { margin-bottom: 0; }
+.detail-label {
+  font-size: 9px; letter-spacing: 0.1em;
+  color: var(--slate-300); font-weight: 600;
+  text-transform: uppercase; margin-bottom: 4px;
+}
+.detail-text { color: var(--slate-900); line-height: 1.55; }
+.detail-meta { display: flex; gap: 16px; flex-wrap: wrap; font-size: 11px; color: var(--slate-500); }
+.detail-meta strong { color: var(--slate-900); font-weight: 600; }
+.entity-link {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--white); border: 0.5px solid var(--border);
+  padding: 3px 8px; border-radius: 4px;
+  font-size: 11px; color: var(--slate-900);
+  cursor: pointer; margin: 2px 4px 2px 0;
+}
+.entity-link:hover { border-color: var(--navy-300); color: var(--navy-300); }
+.entity-link .entity-kind {
+  font-size: 9px; color: var(--slate-300);
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+
+/* LOADING */
+.loading {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--slate-300);
+  font-size: 12px;
+}
+.spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--navy-300);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 8px;
+  vertical-align: -3px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-state {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--slate-300);
+  font-size: 12px;
+}
+
+/* FOOTER */
+.footer {
+  margin: 14px 24px 24px;
+  display: flex; justify-content: space-between;
+  font-size: 10px; color: var(--slate-300);
+}
+.footer-link { color: var(--navy-300); }
+
+/* ============ ENTITY EXPLORER ============ */
+
+/* Top-of-explorer intro: explains what the view is for */
+.explorer-intro-panel {
+  background: linear-gradient(135deg, var(--navy-700) 0%, var(--navy-300) 100%);
+  color: #fff;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+.explorer-intro-title {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 600;
+  opacity: 0.7;
+  margin-bottom: 6px;
+}
+.explorer-intro-body {
+  font-size: 12px;
+  line-height: 1.55;
+}
+.explorer-intro-body strong { color: #fff; font-weight: 600; }
+
+/* Browse By panel (replaces old big KPIs) */
+.browse-by-panel {
+  background: var(--white);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.browse-by-intro {
+  font-size: 12px; color: var(--slate-500);
+  margin-bottom: 12px; line-height: 1.5;
+}
+.browse-by-intro strong { color: var(--slate-900); font-weight: 600; }
+.browse-by-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+}
+.browse-card {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  cursor: pointer;
+  background: var(--bg-soft);
+  transition: all 0.15s;
+  display: flex; flex-direction: column;
+  position: relative;
+}
+.browse-card:hover {
+  border-color: var(--navy-300);
+  background: var(--white);
+}
+.browse-card.active {
+  border-color: var(--navy-300);
+  border-width: 1.5px;
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(110, 132, 174, 0.12);
+}
+.browse-card.active::after {
+  content: '▾'; position: absolute; right: 12px; top: 10px;
+  color: var(--navy-300); font-size: 12px;
+}
+.browse-card-count {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 28px; font-weight: 600;
+  color: var(--navy-700);
+  line-height: 1; margin-bottom: 4px;
+}
+.browse-card-label {
+  font-size: 13px; font-weight: 600;
+  color: var(--slate-900); margin-bottom: 6px;
+}
+.browse-card.active .browse-card-label { color: var(--navy-300); }
+.browse-card-desc {
+  font-size: 11px; line-height: 1.45;
+  color: var(--slate-500);
+}
+
+.explorer-controls {
+  display: flex; gap: 24px; align-items: flex-end; flex-wrap: wrap;
+}
+.explorer-mode-tabs {
+  display: flex; gap: 0; background: var(--bg); border-radius: 6px; padding: 3px;
+}
+.mode-tab {
+  padding: 5px 14px; border-radius: 4px;
+  font-size: 12px; font-weight: 600;
+  background: transparent; color: var(--slate-300);
+  border: none; cursor: pointer;
+}
+.mode-tab.active { background: var(--white); color: var(--navy-300); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.explorer-select { width: 100%; padding: 5px 8px; border: 0.5px solid var(--border); border-radius: 6px; font-size: 12px; background: var(--white); font-family: inherit; }
+
+.entity-detail {
+  background: var(--white);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.entity-header {
+  padding: 18px 22px;
+  border-bottom: 0.5px solid var(--border);
+  background: var(--bg-soft);
+}
+.entity-kind-label {
+  font-size: 10px; letter-spacing: 0.14em;
+  color: var(--slate-300); font-weight: 600;
+  text-transform: uppercase; margin-bottom: 4px;
+}
+.entity-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 22px; color: var(--slate-900);
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+.entity-subtitle { font-size: 12px; color: var(--slate-500); }
+.entity-subtitle strong { color: var(--slate-900); font-weight: 600; }
+.entity-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.entity-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+.entity-stat {
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  min-width: 70px;
+}
+.entity-stat-label {
+  font-size: 9px; letter-spacing: 0.1em;
+  color: var(--slate-300); text-transform: uppercase;
+  font-weight: 600;
+}
+.entity-stat-value {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 18px; font-weight: 600;
+  color: var(--slate-900);
+}
+.entity-stat-sub { font-size: 9px; color: var(--slate-300); }
+
+.entity-section {
+  padding: 14px 22px;
+  border-bottom: 0.5px solid var(--border);
+}
+.entity-section:last-child { border-bottom: none; }
+.entity-section-empty { font-size: 11px; color: var(--slate-300); font-style: italic; padding: 6px 0; }
+
+.unit-card {
+  display: grid;
+  grid-template-columns: 1fr 100px 110px 1fr 90px;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--bg-soft);
+  border: 0.5px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.unit-card .name { color: var(--slate-900); font-weight: 600; }
+.unit-card .meta { color: var(--slate-500); font-size: 11px; }
+
+.project-card {
+  border: 0.5px solid var(--border);
+  background: var(--bg-soft);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+.project-card:hover { border-color: var(--navy-300); }
+.project-card.restart { border-color: #fed8c2; background: #fff7f0; }
+.project-card-head {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+  margin-bottom: 8px;
+}
+.project-card-name { font-size: 14px; font-weight: 600; color: var(--slate-900); margin-bottom: 2px; }
+.project-card-meta { font-size: 11px; color: var(--slate-500); }
+.project-card-tags { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.project-card-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  font-size: 11px; color: var(--slate-500);
+  padding-top: 8px; border-top: 0.5px solid var(--border);
+}
+.project-card-grid > div span {
+  color: var(--slate-300); display: block;
+  font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.deals-table { width: 100%; font-size: 11px; border-collapse: collapse; }
+.deals-table thead tr {
+  font-size: 9px; letter-spacing: 0.08em;
+  color: var(--slate-300); text-transform: uppercase;
+  font-weight: 600;
+}
+.deals-table th { text-align: left; padding: 6px 0; font-weight: 600; }
+.deals-table th.right { text-align: right; }
+.deals-table tbody tr { border-top: 0.5px solid var(--border); cursor: pointer; }
+.deals-table tbody tr:hover { background: var(--bg-soft); }
+.deals-table td { padding: 8px 0; color: var(--slate-900); vertical-align: top; }
+.deals-table td.right { text-align: right; }
+.deals-table td.muted { color: var(--slate-500); }
+.deals-table td.dim { color: var(--slate-300); }
+.deals-table tr.rollup { border-top: 1px solid var(--border); }
+.deals-table tr.rollup td { padding-top: 8px; font-weight: 600; }
+
+.context-card {
+  display: inline-flex; flex-direction: column;
+  border: 0.5px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  background: var(--bg-soft);
+  font-size: 11px;
+  cursor: pointer;
+  margin-right: 6px;
+  margin-bottom: 6px;
+}
+.context-card:hover { border-color: var(--navy-300); }
+.context-card-kind {
+  color: var(--slate-300);
+  font-size: 9px; letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.context-card-name { color: var(--slate-900); font-weight: 600; }
+
+.timeline-item {
+  border-left: 2px solid var(--navy-300);
+  padding: 4px 0 4px 10px;
+  font-size: 11px;
+  margin-bottom: 0;
+  cursor: pointer;
+}
+.timeline-item:hover .timeline-summary { color: var(--navy-300); }
+.timeline-date {
+  color: var(--slate-300);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.timeline-date .source-link {
+  color: var(--navy-300); text-decoration: none;
+  border-bottom: 1px dotted var(--navy-200);
+}
+.timeline-date .timeline-toggle-hint {
+  font-size: 9px; color: var(--slate-300);
+  font-style: italic;
+  opacity: 0.7;
+  white-space: nowrap;
+  margin-left: 12px;
+  letter-spacing: 0;
+}
+.timeline-summary { color: var(--slate-900); line-height: 1.4; margin-top: 1px; }
+
+/* Inline announcement expansion within entity view */
+.entity-ann-card {
+  border-bottom: 0.5px solid var(--border);
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+.entity-ann-card:last-child { border-bottom: none; }
+.entity-ann-detail {
+  display: none;
+  margin-top: 8px;
+  padding: 12px 14px 14px;
+  background: var(--bg-soft);
+  border-radius: 6px;
+  font-size: 12px;
+  border-left: 2px solid var(--navy-300);
+}
+.entity-ann-detail.open { display: block; }
+
+/* Inline preview for linked entities (Deal/Context/Site/Project shown in another's detail view) */
+.inline-entity-host {
+  display: none;
+  margin-top: 4px;
+}
+.inline-entity-host.open { display: block; }
+.inline-entity-card {
+  background: #fcfcfd;
+  border: 1px solid var(--navy-200);
+  border-left: 3px solid var(--navy-300);
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin: 6px 0 12px;
+  font-size: 12px;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+}
+.inline-entity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 0.5px solid var(--border);
+}
+.inline-entity-kind {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--slate-300);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.inline-entity-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--slate-900);
+  font-family: 'Playfair Display', Georgia, serif;
+}
+.inline-entity-jump {
+  font-size: 11px;
+  color: var(--navy-300);
+  cursor: pointer;
+  font-weight: 500;
+  padding: 4px 10px;
+  border: 0.5px solid var(--navy-200);
+  border-radius: 4px;
+  white-space: nowrap;
+  transition: all 0.12s;
+}
+.inline-entity-jump:hover {
+  background: var(--navy-300);
+  color: white;
+  border-color: var(--navy-300);
+}
+.inline-entity-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px 16px;
+  margin-bottom: 10px;
+}
+.ied-label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--slate-300);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.ied-val {
+  font-size: 12px;
+  color: var(--slate-900);
+  line-height: 1.4;
+}
+.ied-sub {
+  font-size: 10px;
+  color: var(--slate-500);
+  font-weight: 400;
+}
+.ied-pill {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 7px;
+  background: var(--bg-soft);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  margin-right: 4px;
+  margin-top: 3px;
+  color: var(--slate-700);
+}
+.inline-entity-row {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 0.5px solid var(--border);
+  font-size: 11px;
+}
+.inline-entity-row .ied-label {
+  display: inline-block;
+  margin-right: 6px;
+}
+.inline-entity-notes {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: var(--white);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--slate-700);
+  line-height: 1.5;
+  font-style: italic;
+}
+
+@media (max-width: 700px) {
+  .inline-entity-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Hint text above tables with inline-expandable rows */
+.ctx-deal-hint {
+  font-size: 11px;
+  color: var(--slate-500);
+  font-style: italic;
+  margin-bottom: 6px;
+}
+.inline-toggle-row {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.inline-toggle-row:hover { background: var(--bg-soft); }
+.inline-host-row td {
+  padding: 0 !important;
+  background: transparent !important;
+}
+.inline-host-row td .inline-entity-host { padding: 0 14px; }
+
+/* When an inline-expandable card needs its expansion to span a parent grid,
+   set the wrap to span all columns when its inline host is open */
+.project-card-wrap, .context-card-wrap {
+  /* Default: each wrap is one grid item, hosting both the card and (when open)
+     the inline detail directly underneath. */
+}
+.project-card-wrap:has(.inline-entity-host.open),
+.context-card-wrap:has(.inline-entity-host.open) {
+  grid-column: 1 / -1;
+}
+
+.parent-link-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-soft);
+  border: 0.5px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.parent-link-row:hover { border-color: var(--navy-300); }
+.parent-link-kind {
+  font-size: 9px; letter-spacing: 0.08em;
+  color: var(--slate-300); text-transform: uppercase;
+  font-weight: 600;
+}
+.parent-link-arrow { margin-left: auto; color: var(--navy-300); font-size: 10px; }
+
+/* ENTITY LIST (when no entity selected) */
+.entity-list-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 8px;
+}
+.entity-list-card {
+  background: var(--white);
+  border: 0.5px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.entity-list-card:hover { border-color: var(--navy-300); }
+.entity-list-card-name { font-weight: 600; color: var(--slate-900); margin-bottom: 3px; }
+.entity-list-card-meta { font-size: 11px; color: var(--slate-500); display: flex; gap: 8px; flex-wrap: wrap; }
+.entity-list-card-tags { margin-top: 6px; display: flex; gap: 3px; flex-wrap: wrap; }
+
+/* TOOLTIP (info-icon style) */
+.tip-wrap { position: relative; display: inline-block; }
+.tip-icon {
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  width: 12px; height: 12px;
+  font-size: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--slate-500);
+  font-style: normal;
+  font-weight: 600;
+  cursor: help;
+  margin-left: 4px;
+  vertical-align: 1px;
+  font-family: Georgia, serif;
+}
+.tip-icon.dark {
+  background: rgba(255,255,255,0.18);
+  color: var(--white);
+}
+.tip-box {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--slate-900);
+  color: var(--white);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  width: 240px;
+  z-index: 60;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  font-weight: 400;
+  font-family: 'Inter', sans-serif;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.tip-box::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--slate-900);
+}
+.tip-wrap:hover .tip-box { display: block; }
+
+/* TWO-ROW FILTER GRID */
+.filter-grid-row {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 8px; margin-bottom: 8px;
+}
+.filter-grid-row:last-of-type { margin-bottom: 12px; }
+
+/* EXPLORER MODE-SPECIFIC FILTER ROW */
+.explorer-mode-filters {
+  border-top: 0.5px solid var(--border-soft);
+  padding-top: 10px; margin-top: 10px;
+  display: flex; flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+}
+.explorer-mode-filters .refine-label {
+  font-size: 9px; letter-spacing: 0.12em;
+  color: var(--slate-300); font-weight: 600;
+  text-transform: uppercase;
+  align-self: center;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+/* EXPLORER SUMMARY PANEL */
+.explorer-summary {
+  background: var(--white);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+}
+.explorer-summary-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 10px;
+  flex-wrap: wrap; gap: 8px;
+}
+.explorer-summary-title {
+  font-size: 13px; font-weight: 600; color: var(--slate-900);
+}
+.explorer-summary-sub {
+  font-size: 11px; color: var(--slate-300);
+}
+.explorer-summary-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.summary-stat {
+  background: var(--bg-soft);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.summary-stat-label {
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--slate-300); font-weight: 600;
+  margin-bottom: 2px;
+}
+.summary-stat-value {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 18px; font-weight: 600; color: var(--slate-900);
+}
+.summary-stat-sub {
+  font-size: 9px; color: var(--slate-300); margin-top: 1px;
+}
+
+/* SORTABLE TABLES (Project / Deal / Context list mode) */
+.list-table-wrap {
+  background: var(--white);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.list-table-toolbar {
+  padding: 10px 18px;
+  border-bottom: 0.5px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; color: var(--slate-300);
+}
+.list-table {
+  width: 100%; border-collapse: collapse; font-size: 12px;
+  table-layout: fixed;
+}
+.list-table thead {
+  background: var(--bg);
+}
+.list-table th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 10px; letter-spacing: 0.08em; font-weight: 600;
+  color: var(--slate-300); text-transform: uppercase;
+  border-bottom: 0.5px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+}
+.list-table th:hover { color: var(--slate-700); }
+.list-table th.sorted { color: var(--navy-300); }
+.list-table th.right { text-align: right; }
+.list-table tbody tr {
+  border-bottom: 0.5px solid var(--border);
+  cursor: pointer;
+}
+.list-table tbody tr:hover { background: var(--bg-soft); }
+.list-table tbody tr.alt { background: var(--bg-row); }
+.list-table tbody tr.alt:hover { background: var(--bg-soft); }
+.list-table td {
+  padding: 10px 12px;
+  vertical-align: middle;
+  color: var(--slate-900);
+  overflow: hidden; text-overflow: ellipsis;
+}
+.list-table td.right { text-align: right; }
+.list-table td.muted { color: var(--slate-500); font-size: 11px; }
+.list-table td.dim { color: var(--slate-300); font-size: 11px; }
+.list-table td .tag { font-size: 9px; }
+.list-table td .ent-name {
+  font-weight: 600;
+  display: block; line-height: 1.3;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.list-table td .ent-meta {
+  font-size: 10px; color: var(--slate-500);
+  margin-top: 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* LINKED-TO COLUMN in Activity Feed */
+.linked-to {
+  display: flex; flex-direction: column; gap: 2px;
+  font-size: 11px;
+  line-height: 1.3;
+  min-width: 0;
+}
+.linked-to-primary {
+  color: var(--navy-300);
+  cursor: pointer;
+  font-weight: 500;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+.linked-to-primary:hover { text-decoration: underline; }
+.linked-to-kind {
+  font-size: 9px; color: var(--slate-300);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  display: block;
+  font-weight: 600;
+}
+.linked-to-secondary {
+  font-size: 10px;
+  color: var(--slate-300);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  cursor: pointer;
+}
+.linked-to-secondary:hover { color: var(--slate-700); text-decoration: underline; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .breakdown-grid { grid-template-columns: 1fr; }
+  .filter-grid { grid-template-columns: repeat(3, 1fr); }
+  .filter-grid-row { grid-template-columns: repeat(2, 1fr); }
+  .explorer-summary-grid { grid-template-columns: repeat(3, 1fr); }
+  .browse-by-grid { grid-template-columns: repeat(2, 1fr); }
+  .nav-sub { display: none; }
+}
+@media (max-width: 600px) {
+  .filter-grid { grid-template-columns: repeat(2, 1fr); }
+  .filter-grid-row { grid-template-columns: repeat(2, 1fr); }
+  .explorer-summary-grid { grid-template-columns: repeat(2, 1fr); }
+  .browse-by-grid { grid-template-columns: 1fr; }
+  .filter-top { flex-direction: column; align-items: stretch; }
+  .search-wrap { max-width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="topnav">
+  <div class="nav-logo">
+    <div class="nav-icon">⚛</div>
+    <div>
+      <div class="nav-title">EFI Foundation</div>
+      <div class="nav-sub">Nuclear Scaling Initiative</div>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-tab="feed" onclick="switchTab('feed')">Activity feed</button>
+      <button class="nav-tab" data-tab="explorer" onclick="switchTab('explorer')">Entity explorer</button>
+    </div>
+    <span class="review-badge zero" id="review-badge" onclick="openReviewQueue()">— needs review</span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">U.S. Nuclear Deployment</div>
+  <h1 class="hero-title">Nuclear Deal Tracker</h1>
+  <div class="hero-sub">Tracking commercialization milestones, partnerships, and deployment announcements across U.S. nuclear projects.</div>
+  <div class="hero-orient">
+    <strong>Physical fleet</strong> = today's reactor count by status. <strong>Pipeline activity</strong> = development efforts and capital flow that may change those counts. A project (pipeline) can wrap one or more reactor units (fleet) — e.g., Vogtle 3&amp;4 is one project containing two units.
+  </div>
+
+  <div class="kpi-tier-label">Physical fleet <span class="tier-sub">— current U.S. reactor count by status</span></div>
+  <div class="kpi-row">
+    <div class="kpi-card clickable" onclick="filterByFleet('Operating')">
+      <div class="kpi-label">Operating <span class="tip-wrap"><span class="tip-icon dark">i</span><span class="tip-box">Reactor units currently producing power. Each is a single physical reactor; multi-unit sites contain several. 94 across 38 sites.</span></span></div>
+      <div class="kpi-value-row"><span class="kpi-value" id="kpi-operating">—</span><span class="kpi-unit">units</span></div>
+      <div class="kpi-sub" id="kpi-operating-sub">—</div>
+    </div>
+    <div class="kpi-card clickable" onclick="filterByStage('Construction')">
+      <div class="kpi-label">Construction <span class="tip-wrap"><span class="tip-icon dark">i</span><span class="tip-box">Reactor units inside a project at Construction stage. Counts physical reactors actively being built today.</span></span></div>
+      <div class="kpi-value-row"><span class="kpi-value" id="kpi-construction">—</span><span class="kpi-unit">units</span></div>
+      <div class="kpi-sub" id="kpi-construction-sub">—</div>
+    </div>
+    <div class="kpi-card clickable" onclick="filterByFleet('Planned')">
+      <div class="kpi-label">Planned <span class="tip-wrap"><span class="tip-icon dark">i</span><span class="tip-box">Reactor units announced but not yet under construction. Includes pre-application, permitting, and permitted/licensed projects.</span></span></div>
+      <div class="kpi-value-row"><span class="kpi-value" id="kpi-planned">—</span><span class="kpi-unit">units</span></div>
+      <div class="kpi-sub" id="kpi-planned-sub">—</div>
+    </div>
+    <div class="kpi-card clickable" onclick="filterByFleet('Shut Down')">
+      <div class="kpi-label">Shut down <span class="tip-wrap"><span class="tip-icon dark">i</span><span class="tip-box">Reactor units no longer operating. Some are inside Restart projects (e.g. TMI-1, Palisades, Duane Arnold).</span></span></div>
+      <div class="kpi-value-row"><span class="kpi-value" id="kpi-shutdown">—</span><span class="kpi-unit">units</span></div>
+      <div class="kpi-sub" id="kpi-shutdown-sub">—</div>
+    </div>
+    <div class="kpi-card clickable" onclick="switchTab('explorer'); setExplorerMode('site')">
+      <div class="kpi-label">Sites <span class="tip-wrap"><span class="tip-icon dark">i</span><span class="tip-box">Geographic locations hosting one or more reactor units. Some have active development projects, others are operating-fleet only.</span></span></div>
+      <div class="kpi-value-row"><span class="kpi-value" id="kpi-sites">—</span></div>
+      <div class="kpi-sub" id="kpi-sites-sub">—</div>
+    </div>
+  </div>
+
+  <div class="kpi-tier-label">Pipeline activity <span class="tier-sub">— development efforts driving change to that fleet</span></div>
+  <div class="kpi-row">
+    <div class="kpi-card clickable" onclick="switchTab('explorer'); setExplorerMode('project')">
+      <div class="kpi-label">Projects <span class="tip-wrap"><span class="tip-icon dark">i</span><span class="tip-box">Development efforts that create, restart, uprate, or extend reactor units. One project can wrap multiple units (e.g. Vogtle 3&amp;4 = 1 project, 2 units).</span></span></div>
+      <div class="kpi-value-row"><span class="kpi-value" id="kpi-projects">—</span></div>
+      <div class="kpi-sub" id="kpi-projects-sub">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Project cost <span class="tip-wrap"><span class="tip-icon dark">i</span><span class="tip-box">Sum of cost-contribution dollars across all deals: grants, debt, and equity that fund project construction. Excludes PPA revenue (which doesn't fund the project itself).</span></span></div>
+      <div class="kpi-value-row"><span class="kpi-value" id="kpi-cost">—</span></div>
+      <div class="kpi-sub">grants + debt + equity</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">PPA exposure <span class="tip-wrap"><span class="tip-icon dark">i</span><span class="tip-box">Total disclosed value of Power Purchase Agreements — primarily hyperscaler offtake (Microsoft, Amazon, Google, Meta). This is contracted revenue, not project funding.</span></span></div>
+      <div class="kpi-value-row"><span class="kpi-value" id="kpi-ppa">—</span></div>
+      <div class="kpi-sub">hyperscaler offtake</div>
+    </div>
+    <div class="kpi-card clickable" onclick="switchTab('explorer'); setExplorerMode('deal')">
+      <div class="kpi-label">Deals</div>
+      <div class="kpi-value-row"><span class="kpi-value" id="kpi-deals">—</span></div>
+      <div class="kpi-sub" id="kpi-deals-sub">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Announcements</div>
+      <div class="kpi-value-row"><span class="kpi-value" id="kpi-anns">—</span></div>
+      <div class="kpi-sub">last 12 months</div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+<!-- TAB 1: ACTIVITY FEED -->
+<div class="tab-pane active" id="tab-feed">
+
+  <!-- Explainer: what is this view for -->
+  <div class="explorer-intro-panel">
+    <div class="explorer-intro-title">What's this for?</div>
+    <div class="explorer-intro-body">
+      The chronological stream of <strong>everything new</strong> — milestones, partnerships, capital, regulatory actions — scraped daily from 48 RSS feeds across the U.S. nuclear ecosystem.
+      Use this view to <strong>stay current</strong> on what's happening week to week, or to <strong>narrow to a specific thread</strong> using filters (project, lead entity, reactor class, date range, etc.).
+      Click any row to expand the full details, including linked entities and the source article. Export the filtered set to Excel anytime.
+    </div>
+  </div>
+
+  <!-- Active project breakdown panel -->
+  <div class="panel" id="breakdown-panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Active project pipeline</div>
+        <div class="panel-subtitle" id="breakdown-subtitle">Loading…</div>
+        <div class="panel-explainer">Same set of projects, sliced two ways.</div>
+      </div>
+      <span class="panel-link" onclick="switchTab('explorer'); setExplorerMode('project')">View in entity explorer →</span>
+    </div>
+    <div class="breakdown-grid">
+      <div class="breakdown-card">
+        <div class="bd-col-label">By project type <span class="bd-col-hint">(what kind of work)</span></div>
+        <div id="bd-by-type"></div>
+        <div class="bd-total" id="bd-total-type"></div>
+      </div>
+      <div class="breakdown-card">
+        <div class="bd-col-label">By project stage <span class="bd-col-hint">(how far along)</span></div>
+        <div id="bd-by-stage"></div>
+        <div class="bd-total" id="bd-total-stage"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter panel -->
+  <div class="panel">
+    <div class="filter-top">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;">
+        <span class="filter-label-text">Filter results</span>
+        <div class="search-wrap">
+          <input type="text" id="f-search" class="search-input" placeholder="Search announcements by keyword…" oninput="renderFeed()">
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-reset" onclick="resetFilters()">Reset filters</button>
+        <button class="btn btn-primary" onclick="downloadExcel()">⬇ Download Excel</button>
+      </div>
+    </div>
+    <div class="filter-grid-row filter-entity-row">
+      <div class="filter-item ms-wrap" id="ms-site">
+        <label>Site</label>
+        <button class="ms-trigger" onclick="toggleMs('ms-site', event)"><span class="ms-trigger-text">All</span><span class="ms-trigger-arrow">▾</span></button>
+        <div class="ms-dropdown"></div>
+      </div>
+      <div class="filter-item ms-wrap" id="ms-project">
+        <label>Project</label>
+        <button class="ms-trigger" onclick="toggleMs('ms-project', event)"><span class="ms-trigger-text">All</span><span class="ms-trigger-arrow">▾</span></button>
+        <div class="ms-dropdown"></div>
+      </div>
+      <div class="filter-item ms-wrap" id="ms-deal">
+        <label>Deal</label>
+        <button class="ms-trigger" onclick="toggleMs('ms-deal', event)"><span class="ms-trigger-text">All</span><span class="ms-trigger-arrow">▾</span></button>
+        <div class="ms-dropdown"></div>
+      </div>
+      <div class="filter-item ms-wrap" id="ms-context">
+        <label>Context item</label>
+        <button class="ms-trigger" onclick="toggleMs('ms-context', event)"><span class="ms-trigger-text">All</span><span class="ms-trigger-arrow">▾</span></button>
+        <div class="ms-dropdown"></div>
+      </div>
+    </div>
+    <div class="filter-grid-row">
+      <div class="filter-item ms-wrap" id="ms-reactorclass">
+        <label>Reactor class</label>
+        <button class="ms-trigger" onclick="toggleMs('ms-reactorclass', event)"><span class="ms-trigger-text">All</span><span class="ms-trigger-arrow">▾</span></button>
+        <div class="ms-dropdown"></div>
+      </div>
+      <div class="filter-item ms-wrap" id="ms-state">
+        <label>State</label>
+        <button class="ms-trigger" onclick="toggleMs('ms-state', event)"><span class="ms-trigger-text">All</span><span class="ms-trigger-arrow">▾</span></button>
+        <div class="ms-dropdown"></div>
+      </div>
+      <div class="filter-item ms-wrap" id="ms-leadentity">
+        <label>Lead entity</label>
+        <button class="ms-trigger" onclick="toggleMs('ms-leadentity', event)"><span class="ms-trigger-text">All</span><span class="ms-trigger-arrow">▾</span></button>
+        <div class="ms-dropdown"></div>
+      </div>
+    </div>
+    <div class="filter-row2">
+      <div class="date-group">
+        <div><label>From</label><input type="date" id="f-date-from" onchange="renderFeed()"></div>
+        <div><label>To</label><input type="date" id="f-date-to" onchange="renderFeed()"></div>
+        <div class="date-presets">
+          <button class="date-preset-btn" onclick="setDateRange(30)">30d</button>
+          <button class="date-preset-btn" onclick="setDateRange(90)">90d</button>
+          <button class="date-preset-btn active" onclick="setDateRange(365)">1y</button>
+          <button class="date-preset-btn" onclick="setDateRange(0)">All time</button>
+        </div>
+      </div>
+      <label class="toggle-wrap">
+        <input type="checkbox" id="f-needs-review" onchange="renderFeed()">
+        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        Show needs review
+      </label>
+      <label class="toggle-wrap">
+        <input type="checkbox" id="f-new-entities" onchange="renderFeed()">
+        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        New entities only
+      </label>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <div class="table-toolbar">
+      <span id="table-count">Loading…</span>
+      <span id="table-sort">Sorted by date ↓</span>
+    </div>
+    <div class="col-heads" style="grid-template-columns: 80px 200px 1fr 160px 110px 30px;">
+      <div class="col-head sorted" onclick="sortBy('date')">Date <span class="sort-arrow" id="arr-date">↓</span></div>
+      <div class="col-head">Linked to <span class="tip-wrap"><span class="tip-icon">i</span><span class="tip-box">Each announcement may be tied to one or more entities — sites, reactor units, projects, deals, or context items. Some are industry-wide commentary with no specific link.</span></span></div>
+      <div class="col-head" onclick="sortBy('summary')">Summary <span class="sort-arrow" id="arr-summary">↕</span></div>
+      <div class="col-head">Tags</div>
+      <div class="col-head" onclick="sortBy('source')">Source <span class="sort-arrow" id="arr-source">↕</span></div>
+      <div class="col-head"></div>
+    </div>
+    <div id="feed-body">
+      <div class="loading"><div class="spinner"></div>Loading announcements…</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TAB 2: ENTITY EXPLORER -->
+<div class="tab-pane" id="tab-explorer">
+
+  <!-- Explainer: what is this view for -->
+  <div class="explorer-intro-panel">
+    <div class="explorer-intro-title">What's this for?</div>
+    <div class="explorer-intro-body">
+      Use this view to <strong>check the status of a specific project, company, or technology</strong> — anything you'd look up on demand.
+      Pick an entity type below as your entry point, then narrow with filters (state, lead entity, reactor class, deal stage, etc.) or jump directly to a specific item via the dropdown.
+      Each detail page shows <strong>linked reactors, deals, capital roll-up, related context items, and a timeline of recent announcements</strong> — everything tied to that entity in one place.
+    </div>
+  </div>
+
+  <!-- BROWSE BY: 4 cards, one per entity type -->
+  <div class="browse-by-panel">
+    <div class="browse-by-intro">
+      <strong>Browse by entity.</strong> Pick what you want to explore. Each type is a different way to slice the same underlying activity — pick the entry point that matches the question you're asking.
+    </div>
+    <div class="browse-by-grid">
+      <div class="browse-card" data-mode="site" onclick="setExplorerMode('site')">
+        <div class="browse-card-count" id="browse-count-site">—</div>
+        <div class="browse-card-label">Sites</div>
+        <div class="browse-card-desc">Geographic locations hosting one or more reactor units. Some are operating-fleet only; others have active development projects.</div>
+      </div>
+      <div class="browse-card" data-mode="project" onclick="setExplorerMode('project')">
+        <div class="browse-card-count" id="browse-count-project">—</div>
+        <div class="browse-card-label">Projects</div>
+        <div class="browse-card-desc">Development efforts that create, restart, uprate, or extend reactor units. One project can wrap multiple units (e.g., Vogtle 3&amp;4 = 1 project, 2 units).</div>
+      </div>
+      <div class="browse-card" data-mode="deal" onclick="setExplorerMode('deal')">
+        <div class="browse-card-count" id="browse-count-deal">—</div>
+        <div class="browse-card-label">Deals</div>
+        <div class="browse-card-desc">Specific transactions tied to one or more projects — PPAs, loans, grants, equity, MOUs. The financial layer.</div>
+      </div>
+      <div class="browse-card" data-mode="context" onclick="setExplorerMode('context')">
+        <div class="browse-card-count" id="browse-count-context">—</div>
+        <div class="browse-card-label">Context items</div>
+        <div class="browse-card-desc">Cross-cutting frameworks — federal programs, hyperscaler portfolios, state policies, aspirational pipelines.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="explorer-controls">
+      <div style="flex:1;min-width:200px;max-width:380px;">
+        <div class="bd-col-label" id="explorer-select-label">Select site</div>
+        <select id="explorer-select" class="explorer-select" onchange="loadEntity()">
+          <option value="">— choose one —</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:180px;max-width:240px;">
+        <div class="bd-col-label">Search list</div>
+        <div class="search-wrap" style="max-width:100%;">
+          <input type="text" id="explorer-search" class="search-input" placeholder="Name, state, operator…" oninput="rebuildEntityDropdown()">
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-end;">
+        <button class="btn btn-primary" id="explorer-export-btn" onclick="downloadExplorerExcel()">⬇ Download Excel</button>
+      </div>
+    </div>
+
+    <!-- Mode-specific refinement filters (rebuilt by setExplorerMode) -->
+    <div class="explorer-mode-filters" id="explorer-mode-filters">
+      <span class="refine-label">Refine sites:</span>
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <div id="entity-list" style="margin-bottom:14px;"></div>
+  <div id="entity-content"></div>
+
+</div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <span>EFI Foundation · Nuclear Scaling Initiative · Updated daily via scraper</span>
+  <a class="footer-link" href="https://efifoundation.org" target="_blank" rel="noreferrer">efifoundation.org →</a>
+</div>
+
+<script>
+/* ============================================================
+   NUCLEAR DEAL TRACKER v2 — DASHBOARD
+   ============================================================ */
+
+const CSV_BASE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQM7PNhnJ1LIuREfARO3eyxpbVtL-yVqQPZ8OOtnKnlzi1_igRd1-zg6Ne0SxHMCKYmQ5g9I_Ba-sRV/pub";
+const CSV_GIDS = {
+  sites:         '1113250734',
+  units:         '38565451',
+  projects:      '1202517721',
+  deals:         '1290975261',
+  contexts:      '529056657',
+  announcements: '2033732112',
+};
+
+let DATA = { sites: [], units: [], projects: [], deals: [], contexts: [], announcements: [] };
+let INDEX = { sites: {}, units: {}, projects: {}, deals: {}, contexts: {} };
+
+let FILTERS = {
+  search: '',
+  projType: new Set(),
+  ctxType: new Set(),
+  projStage: new Set(),
+  dealType: new Set(),
+  dealStage: new Set(),
+  scope: new Set(),
+  state: new Set(),
+  source: new Set(),
+  reactorClass: new Set(),
+  leadEntity: new Set(),
+  siteId: new Set(),
+  projectId: new Set(),
+  dealId: new Set(),
+  contextId: new Set(),
+  dateFrom: '',
+  dateTo: '',
+  needsReview: false,
+  newEntities: false,
+};
+
+// Pagination for the feed table
+let PAGINATION = { page: 1, pageSize: 25 };
+
+// Mode-specific filters for Entity Explorer
+let EXPLORER_FILTERS = {
+  site: {
+    state: new Set(),
+    projType: new Set(),
+    operator: new Set(),
+    reactorClass: new Set(),
+    reactorTech: new Set(),
+    reactorManufacturer: new Set(),
+    onlyActive: false,
+  },
+  project: {
+    type: new Set(),
+    stage: new Set(),
+    status: new Set(['Active']),
+    state: new Set(),
+    dealType: new Set(),
+    dealStage: new Set(),
+    reactorClass: new Set(),
+    reactorTech: new Set(),
+    reactorManufacturer: new Set(),
+    leadEntity: new Set(),
+    leadType: new Set(),
+  },
+  deal: {
+    type: new Set(),
+    stage: new Set(),
+    economicType: new Set(),
+    leadType: new Set(),
+    leadEntity: new Set(),
+    state: new Set(),
+    partner: new Set(),
+  },
+  context: {
+    type: new Set(),
+    status: new Set(),
+    scope: new Set(),
+  },
+};
+
+// Track sort state for explorer list tables
+let EXPLORER_SORT = {
+  project: { col: 'name', dir: 'asc' },
+  deal: { col: 'name', dir: 'asc' },
+  context: { col: 'name', dir: 'asc' },
+};
+let SORT = { col: 'date', dir: 'desc' };
+let CURRENT_TAB = 'feed';
+let EXPLORER_MODE = 'site';
+
+/* ============ SOURCE NORMALIZATION ============ */
+const SOURCE_MAP = {
+  'ans.org': 'ANS Nuclear Newswire',
+  'world-nuclear-news.org': 'World Nuclear News',
+  'nrc.gov': 'NRC',
+  'nei.org': 'NEI',
+  'energy.gov': 'U.S. DOE',
+  'iaea.org': 'IAEA',
+  'powermag.com': 'Power Magazine',
+  'utilitydive.com': 'Utility Dive',
+  'reuters.com': 'Reuters',
+  'bloomberg.com': 'Bloomberg',
+  'wsj.com': 'WSJ',
+  'ft.com': 'Financial Times',
+  'atomicinsights.com': 'Atomic Insights',
+  'x-energy.com': 'X-energy',
+  'holtecinternational.com': 'Holtec',
+  'terrapower.com': 'TerraPower',
+  'kairospower.com': 'Kairos Power',
+  'oklo.com': 'Oklo',
+  'westinghousenuclear.com': 'Westinghouse',
+  'nuscalepower.com': 'NuScale',
+  'tva.com': 'TVA',
+  'duke-energy.com': 'Duke Energy',
+  'dominionenergy.com': 'Dominion',
+  'constellationenergy.com': 'Constellation',
+  'southerncompany.com': 'Southern Co',
+  'gevernova.com': 'GE Vernova',
+  'cfsenergy.com': 'CFS',
+  'ir.nanonuclearenergy.com': 'NANO Nuclear (IR)',
+  'helionenergy.com': 'Helion',
+  'google': 'Google',
+  'fb.com': 'Meta',
+  'microsoft.com': 'Microsoft',
+  'aboutamazon.com': 'Amazon',
+  'brookfield.com': 'Brookfield',
+  'ny.gov': 'NY State',
+  'whitehouse.gov': 'White House',
+  'neutronbytes.com': 'Neutron Bytes',
+  'purdue.edu': 'Purdue',
+  'cnbc.com': 'CNBC',
+  'forbes.com': 'Forbes',
+  'axios.com': 'Axios',
+  'eenews.net': 'E&E News',
+  'spglobal.com': 'S&P Global',
+};
+const norm = s => SOURCE_MAP[(s||'').toLowerCase()] || (s || '');
+
+/* ============ TAG TYPING ============ */
+function projTypeClass(t) {
+  if (!t) return 'tag-scope';
+  const x = t.toLowerCase();
+  if (x.includes('extension') || x.includes('renewal')) return 'tag-extension';
+  if (x.includes('restart')) return 'tag-restart';
+  if (x.includes('uprate')) return 'tag-uprate';
+  if (x.includes('large')) return 'tag-newlarge';
+  if (x.includes('advanced') || x.includes('smr')) return 'tag-newsmr';
+  return 'tag-scope';
+}
+function ctxTypeClass(t) {
+  if (!t) return 'tag-scope';
+  const x = t.toLowerCase();
+  if (x.includes('hyperscaler') || x.includes('vendor') || x.includes('corporate')) return 'tag-hyperscaler';
+  if (x.includes('federal') || x.includes('doe') || x.includes('government')) return 'tag-federal';
+  if (x.includes('state') || x.includes('policy')) return 'tag-statepol';
+  if (x.includes('aspirational') || x.includes('pipeline')) return 'tag-scope';
+  if (x.includes('fuel')) return 'tag-fuelcycle';
+  return 'tag-scope';
+}
+function ctxTypeShort(t) {
+  if (!t) return '';
+  const x = t.toLowerCase();
+  if (x.includes('hyperscaler') || x.includes('vendor') || x.includes('corporate')) return 'Hyperscaler portfolio';
+  if (x.includes('federal') || x.includes('doe')) return 'Federal program';
+  if (x.includes('state policy')) return 'State policy';
+  if (x.includes('aspirational')) return 'Aspirational';
+  if (x.includes('fuel')) return 'Fuel cycle';
+  return t;
+}
+function unitStatusClass(s) {
+  const x = (s||'').toLowerCase();
+  if (x.includes('operating')) return 'tag-status-operating';
+  if (x.includes('planned')) return 'tag-status-planned';
+  if (x.includes('shut')) return 'tag-status-shutdown';
+  if (x.includes('decom')) return 'tag-status-decom';
+  return 'tag-scope';
+}
+function projStatusClass(s) {
+  const x = (s||'').toLowerCase();
+  if (x.includes('active')) return 'tag-status-active';
+  if (x.includes('paused') || x.includes('on hold')) return 'tag-status-paused';
+  if (x.includes('cancelled') || x.includes('withdrawn')) return 'tag-status-shutdown';
+  if (x.includes('completed')) return 'tag-status-active';
+  return 'tag-scope';
+}
+
+/* ============ DATA LOAD ============ */
+async function loadAll() {
+  const fetches = Object.entries(CSV_GIDS).map(async ([key, gid]) => {
+    const url = `${CSV_BASE}?gid=${gid}&single=true&output=csv`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Failed to fetch ${key}: ${resp.status}`);
+    const text = await resp.text();
+    return [key, parseCSV(text)];
+  });
+  try {
+    const results = await Promise.all(fetches);
+    for (const [key, rows] of results) DATA[key] = rows;
+    buildIndices();
+    finalizeData();
+    initFilters();
+    initBreakdown();
+    initKPIs();
+    populateBrowseCounts();
+    // Mark Site as the default active browse card
+    document.querySelectorAll('.browse-card').forEach(c => c.classList.toggle('active', c.dataset.mode === 'site'));
+    buildModeFilters('site');
+    rebuildEntityDropdown();
+    renderFeed();
+    initReviewBadge();
+  } catch (err) {
+    console.error('Data load error', err);
+    document.getElementById('feed-body').innerHTML =
+      `<div class="empty-state">Couldn't load data — ${err.message}. Check that the Google Sheet is published.</div>`;
+  }
+}
+function parseCSV(text) {
+  const r = Papa.parse(text, { header: true, skipEmptyLines: 'greedy' });
+  // strip rows where the first key is empty (extra Papa parse quirk)
+  return r.data.filter(row => {
+    const firstKey = Object.keys(row)[0];
+    return row[firstKey] && String(row[firstKey]).trim() !== '';
+  });
+}
+function buildIndices() {
+  INDEX.sites = Object.fromEntries(DATA.sites.map(s => [s.site_id, s]));
+  INDEX.units = Object.fromEntries(DATA.units.map(u => [u.unit_id, u]));
+  INDEX.projects = Object.fromEntries(DATA.projects.map(p => [p.project_id, p]));
+  INDEX.deals = Object.fromEntries(DATA.deals.map(d => [d.deal_id, d]));
+  INDEX.contexts = Object.fromEntries(DATA.contexts.map(c => [c.context_id, c]));
+}
+function splitIds(s) {
+  if (!s) return [];
+  return String(s).split(/[,;]/).map(x => x.trim()).filter(Boolean);
+}
+function finalizeData() {
+  // Annotate units with site reference
+  DATA.units.forEach(u => {
+    u._site = INDEX.sites[u.site_id];
+  });
+  // Annotate projects with linked units, derive site(s)
+  DATA.projects.forEach(p => {
+    const uids = splitIds(p.linked_unit_ids);
+    p._units = uids.map(id => INDEX.units[id]).filter(Boolean);
+    const sites = new Set();
+    p._units.forEach(u => { if (u && u.site_id) sites.add(u.site_id); });
+    p._sites = Array.from(sites).map(sid => INDEX.sites[sid]).filter(Boolean);
+    p._contextIds = splitIds(p.context_ids);
+    p._contexts = p._contextIds.map(id => INDEX.contexts[id]).filter(Boolean);
+  });
+  // Annotate deals with linked projects, contexts
+  DATA.deals.forEach(d => {
+    d._projectIds = splitIds(d.project_ids);
+    d._contextIds = splitIds(d.context_ids);
+    d._projects = d._projectIds.map(id => INDEX.projects[id]).filter(Boolean);
+    d._contexts = d._contextIds.map(id => INDEX.contexts[id]).filter(Boolean);
+  });
+  // Annotate announcements
+  DATA.announcements.forEach(a => {
+    a._projectIds = splitIds(a.project_ids);
+    a._contextIds = splitIds(a.context_ids);
+    a._dealIds = splitIds(a.deal_ids);
+    a._unitIds = splitIds(a.unit_ids);
+    a._siteIds = splitIds(a.site_ids);
+    a._projects = a._projectIds.map(id => INDEX.projects[id]).filter(Boolean);
+    a._contexts = a._contextIds.map(id => INDEX.contexts[id]).filter(Boolean);
+    a._deals = a._dealIds.map(id => INDEX.deals[id]).filter(Boolean);
+    // Resolve reactor units: explicit unit_ids OR via projects' units
+    const units = new Map();
+    a._unitIds.forEach(uid => { const u = INDEX.units[uid]; if (u) units.set(uid, u); });
+    a._projects.forEach(p => p._units?.forEach(u => units.set(u.unit_id, u)));
+    a._units = Array.from(units.values());
+    // derive sites: explicit site_ids OR via projects' sites OR via units' sites
+    const sites = new Set(a._siteIds);
+    a._projects.forEach(p => p._sites?.forEach(s => sites.add(s.site_id)));
+    a._unitIds.forEach(uid => { const u = INDEX.units[uid]; if (u?.site_id) sites.add(u.site_id); });
+    a._sites = Array.from(sites).map(id => INDEX.sites[id]).filter(Boolean);
+  });
+}
+
+/* ============ KPIs ============ */
+function parseNumber(x) {
+  if (x === null || x === undefined || x === '') return null;
+  if (typeof x === 'number') return x;
+  const s = String(x).replace(/[$,\s]/g, '').trim();
+  if (s === '' || s === 'info not collected' || s === 'null' || s === 'None') return null;
+  const n = Number(s);
+  return isNaN(n) ? null : n;
+}
+function fmtMoney(n) {
+  if (n === null || n === undefined) return '—';
+  if (n >= 1e9) return '$' + (n/1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return '$' + (n/1e6).toFixed(0) + 'M';
+  if (n >= 1e3) return '$' + (n/1e3).toFixed(0) + 'K';
+  return '$' + n.toLocaleString();
+}
+function fmtMW(n) {
+  if (n === null || n === undefined) return '—';
+  if (n >= 1000) return (n/1000).toFixed(1) + ' GW';
+  return n.toLocaleString() + ' MWe';
+}
+
+function initKPIs() {
+  // Operating
+  const operatingUnits = DATA.units.filter(u => (u.asset_status||'') === 'Operating');
+  const operatingCap = operatingUnits.reduce((s,u) => s + (parseNumber(u.nameplate_mwe) || 0), 0);
+  // operating + part of an active project
+  const activeProjUnitIds = new Set();
+  DATA.projects.forEach(p => {
+    if ((p.project_status||'') === 'Active') {
+      splitIds(p.linked_unit_ids).forEach(id => activeProjUnitIds.add(id));
+    }
+  });
+  const operatingInActive = operatingUnits.filter(u => activeProjUnitIds.has(u.unit_id)).length;
+
+  setText('kpi-operating', operatingUnits.length);
+  setText('kpi-operating-sub', `${(operatingCap/1000).toFixed(1)} GW · ${operatingInActive} in active project`);
+
+  // Construction (units in active project at Construction stage)
+  const constructionUnits = [];
+  DATA.projects.forEach(p => {
+    if ((p.project_status||'') === 'Active' && (p.project_stage||'').toLowerCase().includes('construction')) {
+      splitIds(p.linked_unit_ids).forEach(id => {
+        const u = INDEX.units[id];
+        if (u) constructionUnits.push(u);
+      });
+    }
+  });
+  const constructionCap = constructionUnits.reduce((s,u) => s + (parseNumber(u.nameplate_mwe) || 0), 0);
+  setText('kpi-construction', constructionUnits.length);
+  setText('kpi-construction-sub', constructionCap > 0 ? fmtMW(constructionCap) : '—');
+
+  // Planned
+  const plannedUnits = DATA.units.filter(u => (u.asset_status||'') === 'Planned');
+  const plannedCap = plannedUnits.reduce((s,u) => s + (parseNumber(u.nameplate_mwe) || 0), 0);
+  setText('kpi-planned', plannedUnits.length);
+  setText('kpi-planned-sub', plannedCap > 0 ? fmtMW(plannedCap) : '—');
+
+  // Shut Down
+  const shutdown = DATA.units.filter(u => (u.asset_status||'') === 'Shut Down');
+  const inRestart = shutdown.filter(u => activeProjUnitIds.has(u.unit_id)).length;
+  setText('kpi-shutdown', shutdown.length);
+  setText('kpi-shutdown-sub', inRestart > 0 ? `${inRestart} in restart project` : '—');
+
+  // Sites
+  const siteIdsWithActive = new Set();
+  Array.from(activeProjUnitIds).forEach(uid => {
+    const u = INDEX.units[uid];
+    if (u && u.site_id) siteIdsWithActive.add(u.site_id);
+  });
+  setText('kpi-sites', DATA.sites.length);
+  setText('kpi-sites-sub', `${siteIdsWithActive.size} with active project`);
+
+  // Projects
+  const activeProj = DATA.projects.filter(p => (p.project_status||'') === 'Active').length;
+  setText('kpi-projects', DATA.projects.length);
+  setText('kpi-projects-sub', `${activeProj} active`);
+
+  // Project cost roll-up (cost_contribution_usd)
+  const totalCost = DATA.deals.reduce((s,d) => s + (parseNumber(d.cost_contribution_usd) || 0), 0);
+  setText('kpi-cost', fmtMoney(totalCost));
+
+  // PPA exposure (sum capital_value_usd of PPA-typed deals)
+  const ppaExposure = DATA.deals
+    .filter(d => (d.deal_type||'').toUpperCase() === 'PPA')
+    .reduce((s,d) => s + (parseNumber(d.capital_value_usd) || 0), 0);
+  setText('kpi-ppa', fmtMoney(ppaExposure));
+
+  // Deals
+  const closedDeals = DATA.deals.filter(d => (d.deal_stage||'').toLowerCase() === 'closed').length;
+  setText('kpi-deals', DATA.deals.length);
+  setText('kpi-deals-sub', `${closedDeals} closed`);
+
+  // Announcements (last 12 months)
+  const cutoff = new Date();
+  cutoff.setMonth(cutoff.getMonth() - 12);
+  const recent = DATA.announcements.filter(a => {
+    const d = parseDate(a.published_date);
+    return d && d >= cutoff;
+  }).length;
+  setText('kpi-anns', recent);
+}
+
+function setText(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
+
+/* ============ BREAKDOWN PANEL ============ */
+function initBreakdown() {
+  const activeProjects = DATA.projects.filter(p => (p.project_status||'') === 'Active');
+  const totalUnits = activeProjects.reduce((s,p) => s + (p._units?.length || 0), 0);
+
+  setText('breakdown-subtitle', `${activeProjects.length} active projects covering ${totalUnits} reactor units`);
+
+  // By project type
+  const byType = {};
+  activeProjects.forEach(p => {
+    const t = p.project_type || 'Other';
+    if (!byType[t]) byType[t] = { projects: 0, units: 0 };
+    byType[t].projects++;
+    byType[t].units += (p._units?.length || 0);
+  });
+  const typeOrder = ['New Build — Advanced/SMR', 'Extension / Renewal', 'New Build — Large', 'Uprate', 'Restart'];
+  const sortedTypes = Object.keys(byType).sort((a,b) => {
+    const ai = typeOrder.indexOf(a); const bi = typeOrder.indexOf(b);
+    if (ai === -1 && bi === -1) return byType[b].projects - byType[a].projects;
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+  const maxTypeProj = Math.max(...Object.values(byType).map(x => x.projects), 1);
+  const typeColors = {
+    'New Build — Advanced/SMR': '#7F77DD',
+    'Extension / Renewal': '#639922',
+    'New Build — Large': '#185FA5',
+    'Uprate': '#BA7517',
+    'Restart': '#D85A30',
+  };
+  const typeShort = {
+    'New Build — Advanced/SMR': 'New build — Adv/SMR',
+    'Extension / Renewal': 'Extension/Renewal',
+    'New Build — Large': 'New build — Large',
+  };
+  const bdType = document.getElementById('bd-by-type');
+  bdType.innerHTML = sortedTypes.map(t => {
+    const x = byType[t];
+    const pct = (x.projects / maxTypeProj) * 100;
+    const color = typeColors[t] || '#888';
+    const short = typeShort[t] || t;
+    const cls = projTypeClass(t);
+    return `<div class="bd-row bd-row-static">
+      <span class="tag ${cls} bd-tag-cell" style="text-align:center;">${escapeHtml(short)}</span>
+      <div class="bd-bar-bg"><div class="bd-bar-fill" style="background:${color};width:${pct}%"></div></div>
+      <span class="bd-count">${x.projects} proj</span>
+      <span class="bd-units">${x.units} units</span>
+    </div>`;
+  }).join('');
+  // Total row
+  const totalTypeProj = Object.values(byType).reduce((s, x) => s + x.projects, 0);
+  const totalTypeUnits = Object.values(byType).reduce((s, x) => s + x.units, 0);
+  document.getElementById('bd-total-type').innerHTML =
+    `<span class="bd-total-label">Total</span><span>${totalTypeProj} proj &middot; ${totalTypeUnits} units</span>`;
+
+  // By project stage
+  const byStage = {};
+  activeProjects.forEach(p => {
+    const s = p.project_stage || 'Other';
+    if (!byStage[s]) byStage[s] = { projects: 0, units: 0 };
+    byStage[s].projects++;
+    byStage[s].units += (p._units?.length || 0);
+  });
+  const stageOrder = ['Announcement', 'Pre-application / Planning', 'Permitting / Licensing', 'Permitted / Licensed', 'Construction', 'Operation', 'Decommissioning'];
+  const sortedStages = Object.keys(byStage).sort((a,b) => {
+    const ai = stageOrder.indexOf(a); const bi = stageOrder.indexOf(b);
+    if (ai === -1 && bi === -1) return byStage[b].projects - byStage[a].projects;
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return byStage[b].projects - byStage[a].projects;  // most populous first
+  });
+  const maxStageProj = Math.max(...Object.values(byStage).map(x => x.projects), 1);
+  const stageColors = {
+    'Announcement': '#888',
+    'Pre-application / Planning': '#185FA5',
+    'Permitting / Licensing': '#BA7517',
+    'Permitted / Licensed': '#7F77DD',
+    'Construction': '#639922',
+    'Operation': '#1e6b3c',
+    'Decommissioning': '#5f5e5a',
+  };
+  const stageShort = {
+    'Pre-application / Planning': 'Pre-application',
+    'Permitting / Licensing': 'Permitting',
+    'Permitted / Licensed': 'Permitted/Licensed',
+  };
+  const bdStage = document.getElementById('bd-by-stage');
+  bdStage.innerHTML = sortedStages.map(s => {
+    const x = byStage[s];
+    const pct = (x.projects / maxStageProj) * 100;
+    const color = stageColors[s] || '#888';
+    const short = stageShort[s] || s;
+    return `<div class="bd-row bd-row-static">
+      <span class="tag tag-stage bd-tag-cell" style="text-align:center;">${escapeHtml(short)}</span>
+      <div class="bd-bar-bg"><div class="bd-bar-fill" style="background:${color};width:${pct}%"></div></div>
+      <span class="bd-count">${x.projects} proj</span>
+      <span class="bd-units">${x.units} units</span>
+    </div>`;
+  }).join('');
+  // Total row
+  const totalStageProj = Object.values(byStage).reduce((s, x) => s + x.projects, 0);
+  const totalStageUnits = Object.values(byStage).reduce((s, x) => s + x.units, 0);
+  document.getElementById('bd-total-stage').innerHTML =
+    `<span class="bd-total-label">Total</span><span>${totalStageProj} proj &middot; ${totalStageUnits} units</span>`;
+}
+
+/* ============ FILTERS ============ */
+function unique(arr) { return Array.from(new Set(arr.filter(Boolean))).sort((a,b) => String(a).localeCompare(String(b))); }
+
+function initFilters() {
+  // Default date range: last 12 months
+  const now = new Date();
+  const yearAgo = new Date(); yearAgo.setMonth(now.getMonth() - 12);
+  document.getElementById('f-date-from').value = yearAgo.toISOString().slice(0,10);
+  document.getElementById('f-date-to').value = now.toISOString().slice(0,10);
+  FILTERS.dateFrom = document.getElementById('f-date-from').value;
+  FILTERS.dateTo = document.getElementById('f-date-to').value;
+  document.getElementById('f-date-from').addEventListener('change', e => { FILTERS.dateFrom = e.target.value; renderFeed(); });
+  document.getElementById('f-date-to').addEventListener('change', e => { FILTERS.dateTo = e.target.value; renderFeed(); });
+  document.getElementById('f-search').addEventListener('input', e => { FILTERS.search = e.target.value; renderFeed(); });
+  document.getElementById('f-needs-review').addEventListener('change', e => { FILTERS.needsReview = e.target.checked; renderFeed(); });
+  document.getElementById('f-new-entities').addEventListener('change', e => { FILTERS.newEntities = e.target.checked; renderFeed(); });
+
+  // Build dropdown options
+  // Reactor class: from Reactor Units; clean controlled vocab
+  buildMs('ms-reactorclass', unique(DATA.units.map(u => u.reactor_class)), 'reactorClass');
+  // Lead entity: from Deals; raw list, top-down by frequency
+  const leadCounts = {};
+  DATA.deals.forEach(d => { if (d.lead_entity) leadCounts[d.lead_entity] = (leadCounts[d.lead_entity] || 0) + 1; });
+  const leadEntities = Object.keys(leadCounts).sort((a, b) => leadCounts[b] - leadCounts[a]);
+  buildMs('ms-leadentity', leadEntities, 'leadEntity');
+  // Specific entity filters: each option's value = the entity ID, label = the entity name
+  buildMs('ms-site',
+    DATA.sites.slice().sort((a,b) => (a.site_name||'').localeCompare(b.site_name||''))
+      .map(s => ({ value: s.site_id, label: s.site_name + (s.state ? ` (${s.state})` : '') })),
+    'siteId');
+  buildMs('ms-project',
+    DATA.projects.slice().sort((a,b) => (a.project_name||'').localeCompare(b.project_name||''))
+      .map(p => ({ value: p.project_id, label: p.project_name })),
+    'projectId');
+  buildMs('ms-deal',
+    DATA.deals.slice().sort((a,b) => (a.deal_name||'').localeCompare(b.deal_name||''))
+      .map(d => ({ value: d.deal_id, label: d.deal_name })),
+    'dealId');
+  buildMs('ms-context',
+    DATA.contexts.slice().sort((a,b) => (a.context_name||'').localeCompare(b.context_name||''))
+      .map(c => ({ value: c.context_id, label: c.context_name })),
+    'contextId');
+  // States: from sites linked to projects, plus annotation_scope contexts
+  const states = new Set();
+  DATA.sites.forEach(s => { if (s.state) states.add(s.state); });
+  DATA.contexts.forEach(c => { if (c.state) states.add(c.state); });
+  DATA.deals.forEach(d => { if (d.state) states.add(d.state); });
+  buildMs('ms-state', Array.from(states).sort(), 'state');
+
+  // Close all dropdowns when clicking outside
+  document.addEventListener('click', e => {
+    document.querySelectorAll('.ms-wrap.open').forEach(w => {
+      if (!w.contains(e.target)) w.classList.remove('open');
+    });
+  });
+}
+
+function buildMs(wrapId, options, filterKey) {
+  const wrap = document.getElementById(wrapId);
+  const dd = wrap.querySelector('.ms-dropdown');
+  const items = options.map(o => {
+    const value = typeof o === 'string' ? o : o.value;
+    const label = typeof o === 'string' ? o : o.label;
+    return { value, label };
+  });
+  // For long lists, add a search input at the top of the dropdown
+  const showSearch = items.length > 12;
+  const searchBox = showSearch
+    ? `<div class="ms-search-wrap"><input type="text" class="ms-search-input" placeholder="Search…" oninput="filterMsOptions('${wrapId}', this.value)"></div>`
+    : '';
+  dd.innerHTML = searchBox + items.map(({value, label}) =>
+    `<label class="ms-option"><input type="checkbox" data-key="${filterKey}" value="${escapeAttr(value)}"> <span>${escapeHtml(label)}</span></label>`
+  ).join('');
+  dd.querySelectorAll('input[type="checkbox"]').forEach(input => {
+    input.addEventListener('change', e => {
+      const k = e.target.dataset.key;
+      const v = e.target.value;
+      if (e.target.checked) FILTERS[k].add(v);
+      else FILTERS[k].delete(v);
+      updateMsTriggerText(wrapId, FILTERS[k]);
+      renderFeed();
+    });
+  });
+  // Prevent the search input from closing the dropdown when clicked
+  const searchInput = dd.querySelector('.ms-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('click', e => e.stopPropagation());
+  }
+}
+
+/* Filter ms-dropdown options client-side by text match. Called from the dropdown search input. */
+function filterMsOptions(wrapId, query) {
+  const dd = document.querySelector(`#${wrapId} .ms-dropdown`);
+  if (!dd) return;
+  const q = (query || '').toLowerCase();
+  dd.querySelectorAll('.ms-option').forEach(opt => {
+    const text = opt.textContent.toLowerCase();
+    opt.style.display = (!q || text.includes(q)) ? '' : 'none';
+  });
+}
+function toggleMs(wrapId, evt) {
+  evt?.stopPropagation();
+  document.querySelectorAll('.ms-wrap.open').forEach(w => {
+    if (w.id !== wrapId) w.classList.remove('open');
+  });
+  document.getElementById(wrapId).classList.toggle('open');
+}
+function updateMsTriggerText(wrapId, set) {
+  const trigger = document.querySelector(`#${wrapId} .ms-trigger-text`);
+  if (set.size === 0) trigger.textContent = 'All';
+  else if (set.size === 1) trigger.textContent = Array.from(set)[0];
+  else trigger.textContent = `${set.size} selected`;
+}
+function resetFilters() {
+  FILTERS.search = '';
+  document.getElementById('f-search').value = '';
+  ['projType','ctxType','projStage','dealType','dealStage','scope','state','source','reactorClass','leadEntity','siteId','projectId','dealId','contextId'].forEach(k => FILTERS[k].clear());
+  document.querySelectorAll('.ms-dropdown input').forEach(i => i.checked = false);
+  document.querySelectorAll('.ms-trigger-text').forEach(t => t.textContent = 'All');
+  document.getElementById('f-needs-review').checked = false; FILTERS.needsReview = false;
+  document.getElementById('f-new-entities').checked = false; FILTERS.newEntities = false;
+  // Reset date range to last 12 months
+  setDateRange(365);
+}
+
+/* Set the date range filter to N days back (0 = all time) and mark the matching preset active. */
+function setDateRange(days) {
+  const now = new Date();
+  if (days === 0) {
+    FILTERS.dateFrom = '2024-01-01';
+    document.getElementById('f-date-from').value = FILTERS.dateFrom;
+  } else {
+    const from = new Date(); from.setDate(now.getDate() - days);
+    FILTERS.dateFrom = from.toISOString().slice(0,10);
+    document.getElementById('f-date-from').value = FILTERS.dateFrom;
+  }
+  FILTERS.dateTo = now.toISOString().slice(0,10);
+  document.getElementById('f-date-to').value = FILTERS.dateTo;
+  // Update preset button active state
+  document.querySelectorAll('.date-preset-btn').forEach(b => b.classList.remove('active'));
+  const labelMap = { 30: '30d', 90: '90d', 365: '1y', 0: 'All time' };
+  const lbl = labelMap[days];
+  if (lbl) {
+    document.querySelectorAll('.date-preset-btn').forEach(b => {
+      if (b.textContent === lbl) b.classList.add('active');
+    });
+  }
+  renderFeed();
+}
+
+/* Programmatic filter setters from KPI/breakdown clicks */
+function filterByProjectType(t) {
+  switchTab('feed');
+  resetFilters();
+  FILTERS.projType.add(t);
+  document.querySelectorAll(`#ms-projtype input[value="${cssEscape(t)}"]`).forEach(i => i.checked = true);
+  updateMsTriggerText('ms-projtype', FILTERS.projType);
+  renderFeed();
+}
+function filterByProjectStage(s) {
+  switchTab('feed');
+  resetFilters();
+  FILTERS.projStage.add(s);
+  document.querySelectorAll(`#ms-projstage input[value="${cssEscape(s)}"]`).forEach(i => i.checked = true);
+  updateMsTriggerText('ms-projstage', FILTERS.projStage);
+  renderFeed();
+}
+function filterByFleet(status) {
+  switchTab('explorer');
+  setExplorerMode('site');
+  // No specific filter wiring here yet — just navigate to explorer
+}
+function filterByStage(stage) {
+  switchTab('feed');
+  resetFilters();
+  // Match Construction/Permitting fuzzy
+  const matching = unique(DATA.projects.map(p => p.project_stage)).filter(s => s.toLowerCase().includes(stage.toLowerCase()));
+  matching.forEach(s => {
+    FILTERS.projStage.add(s);
+    document.querySelectorAll(`#ms-projstage input[value="${cssEscape(s)}"]`).forEach(i => i.checked = true);
+  });
+  updateMsTriggerText('ms-projstage', FILTERS.projStage);
+  renderFeed();
+}
+
+/* ============ DATE PARSING ============ */
+function parseDate(d) {
+  if (!d) return null;
+  const s = String(d).trim();
+  // YYYY-MM-DD
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]));
+  // YYYY-MM
+  m = s.match(/^(\d{4})-(\d{1,2})$/);
+  if (m) return new Date(parseInt(m[1]), parseInt(m[2])-1, 15);
+  // YYYY
+  m = s.match(/^(\d{4})$/);
+  if (m) return new Date(parseInt(m[1]), 5, 15);
+  // MM/DD/YYYY
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m) return new Date(parseInt(m[3]), parseInt(m[1])-1, parseInt(m[2]));
+  // ISO with time
+  const dt = new Date(s);
+  if (!isNaN(dt)) return dt;
+  return null;
+}
+
+/* ============ FEED FILTERING + RENDERING ============ */
+function passesFilter(a) {
+  // Search
+  if (FILTERS.search) {
+    const q = FILTERS.search.toLowerCase();
+    const hay = [a.headline, a.summary, a.notes, ...(a._projects?.map(p=>p.project_name)||[]), ...(a._contexts?.map(c=>c.context_name)||[])].join(' ').toLowerCase();
+    if (!hay.includes(q)) return false;
+  }
+  // Project type
+  if (FILTERS.projType.size > 0) {
+    const types = a._projects.map(p => p.project_type).filter(Boolean);
+    if (!types.some(t => FILTERS.projType.has(t))) return false;
+  }
+  // Context type
+  if (FILTERS.ctxType.size > 0) {
+    const types = a._contexts.map(c => c.context_type).filter(Boolean);
+    if (!types.some(t => FILTERS.ctxType.has(t))) return false;
+  }
+  // Project stage
+  if (FILTERS.projStage.size > 0) {
+    const stages = a._projects.map(p => p.project_stage).filter(Boolean);
+    if (!stages.some(s => FILTERS.projStage.has(s))) return false;
+  }
+  // Deal type — match if any linked deal has this type
+  if (FILTERS.dealType.size > 0) {
+    const types = a._deals.map(d => d.deal_type).filter(Boolean);
+    if (!types.some(t => FILTERS.dealType.has(t))) return false;
+  }
+  // Deal stage
+  if (FILTERS.dealStage.size > 0) {
+    const stages = a._deals.map(d => d.deal_stage).filter(Boolean);
+    if (!stages.some(s => FILTERS.dealStage.has(s))) return false;
+  }
+  // Reactor class — match if any linked reactor unit has this class
+  if (FILTERS.reactorClass.size > 0) {
+    const classes = a._units.map(u => u.reactor_class).filter(Boolean);
+    if (!classes.some(c => FILTERS.reactorClass.has(c))) return false;
+  }
+  // Lead entity — match if any linked deal has this lead entity
+  if (FILTERS.leadEntity.size > 0) {
+    const leads = a._deals.map(d => d.lead_entity).filter(Boolean);
+    if (!leads.some(l => FILTERS.leadEntity.has(l))) return false;
+  }
+  // Specific entity filters: match if the announcement is linked (directly OR via project/deal) to that entity
+  if (FILTERS.siteId.size > 0) {
+    const siteIds = new Set(a._sites.map(s => s.site_id));
+    if (!Array.from(FILTERS.siteId).some(id => siteIds.has(id))) return false;
+  }
+  if (FILTERS.projectId.size > 0) {
+    const projIds = new Set(a._projects.map(p => p.project_id));
+    if (!Array.from(FILTERS.projectId).some(id => projIds.has(id))) return false;
+  }
+  if (FILTERS.dealId.size > 0) {
+    const dealIds = new Set(a._deals.map(d => d.deal_id));
+    if (!Array.from(FILTERS.dealId).some(id => dealIds.has(id))) return false;
+  }
+  if (FILTERS.contextId.size > 0) {
+    const ctxIds = new Set(a._contexts.map(c => c.context_id));
+    if (!Array.from(FILTERS.contextId).some(id => ctxIds.has(id))) return false;
+  }
+  // Scope
+  if (FILTERS.scope.size > 0) {
+    if (!FILTERS.scope.has(a.announcement_scope)) return false;
+  }
+  // State
+  if (FILTERS.state.size > 0) {
+    const states = new Set();
+    a._sites.forEach(s => { if (s.state) states.add(s.state); });
+    a._contexts.forEach(c => { if (c.state) states.add(c.state); });
+    a._deals.forEach(d => { if (d.state) states.add(d.state); });
+    if (!Array.from(states).some(s => FILTERS.state.has(s))) return false;
+  }
+  // Source
+  if (FILTERS.source.size > 0) {
+    if (!FILTERS.source.has(norm(a.source))) return false;
+  }
+  // Date range
+  const d = parseDate(a.published_date);
+  if (FILTERS.dateFrom && d && d < new Date(FILTERS.dateFrom)) return false;
+  if (FILTERS.dateTo) {
+    const to = new Date(FILTERS.dateTo); to.setHours(23,59,59,999);
+    if (d && d > to) return false;
+  }
+  // Toggles
+  if (FILTERS.needsReview && (a.confidence || '').toLowerCase() !== 'medium' && !a.new_entity_flags) return false;
+  if (FILTERS.newEntities && !a.new_entity_flags) return false;
+  return true;
+}
+
+function sortBy(col) {
+  if (SORT.col === col) SORT.dir = SORT.dir === 'asc' ? 'desc' : 'asc';
+  else { SORT.col = col; SORT.dir = col === 'date' ? 'desc' : 'asc'; }
+  document.querySelectorAll('.col-head').forEach(h => h.classList.remove('sorted'));
+  ['date','summary','source'].forEach(c => {
+    const arr = document.getElementById('arr-'+c);
+    if (arr) arr.textContent = '↕';
+  });
+  const head = document.querySelector(`.col-head[onclick*="${col}"]`);
+  if (head) head.classList.add('sorted');
+  const arrEl = document.getElementById('arr-'+col);
+  if (arrEl) arrEl.textContent = SORT.dir === 'asc' ? '↑' : '↓';
+  setText('table-sort', `Sorted by ${col} ${SORT.dir === 'asc' ? '↑' : '↓'}`);
+  renderFeed();
+}
+
+function renderFeed() {
+  // Auto-reset to page 1 when any filter changes
+  const sig = JSON.stringify({
+    s: FILTERS.search, pt: [...FILTERS.projType], ps: [...FILTERS.projStage],
+    dt: [...FILTERS.dealType], ds: [...FILTERS.dealStage], st: [...FILTERS.state],
+    rc: [...FILTERS.reactorClass], le: [...FILTERS.leadEntity],
+    si: [...FILTERS.siteId], pi: [...FILTERS.projectId],
+    di: [...FILTERS.dealId], ci: [...FILTERS.contextId],
+    df: FILTERS.dateFrom, dto: FILTERS.dateTo,
+    nr: FILTERS.needsReview, ne: FILTERS.newEntities,
+  });
+  if (window._lastFilterSig !== sig) {
+    PAGINATION.page = 1;
+    window._lastFilterSig = sig;
+  }
+
+  const filtered = DATA.announcements.filter(passesFilter);
+  filtered.sort((a,b) => {
+    let av, bv;
+    if (SORT.col === 'date') {
+      av = parseDate(a.published_date)?.getTime() || 0;
+      bv = parseDate(b.published_date)?.getTime() || 0;
+    } else if (SORT.col === 'summary') {
+      av = (a.summary || a.headline || '').toLowerCase();
+      bv = (b.summary || b.headline || '').toLowerCase();
+    } else if (SORT.col === 'source') {
+      av = norm(a.source).toLowerCase();
+      bv = norm(b.source).toLowerCase();
+    }
+    if (av < bv) return SORT.dir === 'asc' ? -1 : 1;
+    if (av > bv) return SORT.dir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  setText('table-count', filtered.length === 0
+    ? `Showing 0 of ${DATA.announcements.length} announcements`
+    : `Showing ${Math.min((PAGINATION.page-1) * PAGINATION.pageSize + 1, filtered.length)}–${Math.min(PAGINATION.page * PAGINATION.pageSize, filtered.length)} of ${filtered.length} announcements (${DATA.announcements.length} in DB)`);
+
+  const body = document.getElementById('feed-body');
+  if (filtered.length === 0) {
+    body.innerHTML = `<div class="empty-state">No announcements match the current filters. <a onclick="resetFilters()" style="cursor:pointer;">Reset filters</a> to see all.</div>`;
+    renderPagination(0);
+    return;
+  }
+
+  // Clamp page if filter narrowed results
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGINATION.pageSize));
+  if (PAGINATION.page > totalPages) PAGINATION.page = totalPages;
+  const startIdx = (PAGINATION.page - 1) * PAGINATION.pageSize;
+  const pageRows = filtered.slice(startIdx, startIdx + PAGINATION.pageSize);
+
+  body.innerHTML = pageRows.map((a, i) => renderFeedRow(a, startIdx + i)).join('');
+  renderPagination(filtered.length);
+  // Wire up row clicks
+  body.querySelectorAll('.feed-row').forEach(row => {
+    row.addEventListener('click', e => {
+      if (e.target.closest('.entity-link')) return;
+      if (e.target.closest('.source-link')) return;
+      const id = row.dataset.id;
+      toggleDetail(id);
+    });
+  });
+}
+
+function renderPagination(total) {
+  let bar = document.getElementById('feed-pagination');
+  if (!bar) {
+    // Create the bar element below feed-body
+    const body = document.getElementById('feed-body');
+    bar = document.createElement('div');
+    bar.id = 'feed-pagination';
+    bar.className = 'pagination-bar';
+    body.parentElement.appendChild(bar);
+  }
+  if (total === 0) { bar.innerHTML = ''; bar.style.display = 'none'; return; }
+  const totalPages = Math.max(1, Math.ceil(total / PAGINATION.pageSize));
+  const page = PAGINATION.page;
+  bar.style.display = totalPages <= 1 ? 'none' : 'flex';
+  if (totalPages <= 1) return;
+  bar.innerHTML = `
+    <div class="pagination-info">Page ${page} of ${totalPages}</div>
+    <div class="pagination-controls">
+      <button class="page-btn" onclick="goToPage(1)" ${page === 1 ? 'disabled' : ''}>« First</button>
+      <button class="page-btn" onclick="goToPage(${page - 1})" ${page === 1 ? 'disabled' : ''}>‹ Prev</button>
+      <button class="page-btn" onclick="goToPage(${page + 1})" ${page === totalPages ? 'disabled' : ''}>Next ›</button>
+      <button class="page-btn" onclick="goToPage(${totalPages})" ${page === totalPages ? 'disabled' : ''}>Last »</button>
+    </div>
+    <div class="pagination-size">
+      Per page:
+      <select onchange="setPageSize(parseInt(this.value))">
+        <option value="25" ${PAGINATION.pageSize === 25 ? 'selected' : ''}>25</option>
+        <option value="50" ${PAGINATION.pageSize === 50 ? 'selected' : ''}>50</option>
+        <option value="100" ${PAGINATION.pageSize === 100 ? 'selected' : ''}>100</option>
+      </select>
+    </div>`;
+}
+
+function goToPage(n) {
+  PAGINATION.page = Math.max(1, n);
+  renderFeed();
+  document.getElementById('feed-body').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function setPageSize(n) {
+  PAGINATION.pageSize = n;
+  PAGINATION.page = 1;
+  renderFeed();
+}
+
+function renderFeedRow(a, idx) {
+  const tags = buildAnnouncementTags(a);
+  const dateStr = a.published_date || '';
+  const summary = a.summary || a.headline || '';
+  const sourceShort = norm(a.source);
+  const sourceUrl = a.source_url || '';
+  const detail = renderFeedDetail(a);
+  const linkedTo = renderLinkedToCell(a);
+  const sourceCell = sourceUrl
+    ? `<a href="${escapeAttr(sourceUrl)}" target="_blank" rel="noopener noreferrer" class="source-link" title="Open article in new tab" onclick="event.stopPropagation();">${escapeHtml(sourceShort)} ↗</a>`
+    : escapeHtml(sourceShort);
+  return `
+<div class="feed-row ${idx % 2 ? 'alt' : ''}" data-id="${a.announcement_id}" style="grid-template-columns: 80px 200px 1fr 160px 110px 30px;">
+  <div class="col-date">${escapeHtml(dateStr)}</div>
+  <div class="linked-to">${linkedTo}</div>
+  <div class="col-summary">${escapeHtml(summary)}</div>
+  <div class="col-tags">${tags.map(t => `<span class="tag ${t.cls}">${escapeHtml(t.label)}</span>`).join('')}</div>
+  <div class="col-source">${sourceCell}</div>
+  <div class="col-menu">⋯</div>
+</div>
+<div class="feed-detail" id="detail-${a.announcement_id}">${detail}</div>`;
+}
+
+/* Build the Linked-to cell content. Picks ONE primary entity to feature, plus a muted secondary line if relevant. */
+function renderLinkedToCell(a) {
+  // Priority order: project (most actionable) → deal → context → site
+  let primary = null, primaryKind = '', primaryId = '';
+  let secondary = '';
+
+  if (a._projects.length > 0) {
+    primary = a._projects[0].project_name;
+    primaryKind = 'Project';
+    primaryId = a._projects[0].project_id;
+    if (a._projects.length > 1) {
+      secondary = `+ ${a._projects.length - 1} more project${a._projects.length > 2 ? 's' : ''}`;
+    } else if (a._sites.length > 0) {
+      secondary = `at ${a._sites[0].site_name}${a._sites[0].state ? ', ' + a._sites[0].state : ''}`;
+    } else if (a._contexts.length > 0) {
+      secondary = `+ ${a._contexts[0].context_name}`;
+    }
+  } else if (a._deals.length > 0) {
+    primary = a._deals[0].deal_name;
+    primaryKind = 'Deal';
+    primaryId = a._deals[0].deal_id;
+    if (a._contexts.length > 0) secondary = `+ ${a._contexts[0].context_name}`;
+  } else if (a._contexts.length > 0) {
+    primary = a._contexts[0].context_name;
+    primaryKind = ctxTypeShort(a._contexts[0].context_type) || 'Context';
+    primaryId = a._contexts[0].context_id;
+    if (a._contexts.length > 1) {
+      secondary = `+ ${a._contexts.length - 1} more`;
+    }
+  } else if (a._sites.length > 0) {
+    primary = a._sites[0].site_name;
+    primaryKind = 'Site';
+    primaryId = a._sites[0].site_id;
+  }
+
+  if (!primary) {
+    return `<span style="color:var(--slate-300);font-size:11px;font-style:italic;">Industry-wide</span>`;
+  }
+
+  const kindMap = { 'Project': 'project', 'Deal': 'deal', 'Site': 'site' };
+  const jumpMode = kindMap[primaryKind] || 'context';
+
+  return `<span class="linked-to-kind">▸ ${escapeHtml(primaryKind)}</span>
+<span class="linked-to-primary" onclick="event.stopPropagation(); jumpToEntity('${jumpMode}','${escapeAttr(primaryId)}')" title="${escapeAttr(primary)}">${escapeHtml(primary)}</span>
+${secondary ? `<span class="linked-to-secondary" title="${escapeAttr(secondary)}">${escapeHtml(secondary)}</span>` : ''}`;
+}
+
+function buildAnnouncementTags(a) {
+  const tags = [];
+  // Project type tags
+  const ptypes = unique(a._projects.map(p => p.project_type));
+  ptypes.forEach(t => tags.push({ label: shortenProjType(t), cls: projTypeClass(t) }));
+  // Project stage tags (only if filter set or single project)
+  if (a._projects.length === 1 && a._projects[0].project_stage) {
+    tags.push({ label: shortenStage(a._projects[0].project_stage), cls: 'tag-stage' });
+  }
+  // Context type tags
+  const ctypes = unique(a._contexts.map(c => ctxTypeShort(c.context_type)));
+  ctypes.forEach(t => tags.push({ label: t, cls: ctxTypeClass(t) }));
+  // De-dupe by label
+  const seen = new Set();
+  return tags.filter(t => {
+    if (seen.has(t.label)) return false;
+    seen.add(t.label); return true;
+  }).slice(0, 4);
+}
+function shortenProjType(t) {
+  if (!t) return '';
+  return t
+    .replace('New Build — Advanced/SMR', 'New build — Adv/SMR')
+    .replace('Extension / Renewal', 'Extension/Renewal')
+    .replace('New Build — Large', 'New build — Large');
+}
+function shortenStage(s) {
+  if (!s) return '';
+  return s
+    .replace('Pre-application / Planning', 'Pre-application')
+    .replace('Permitting / Licensing', 'Permitting')
+    .replace('Permitted / Licensed', 'Permitted');
+}
+
+function renderFeedDetail(a) {
+  const linkBlocks = [];
+  if (a._projects.length) {
+    linkBlocks.push(a._projects.map(p =>
+      `<span class="entity-link" onclick="event.stopPropagation(); jumpToEntity('project','${p.project_id}')"><span class="entity-kind">Project</span>${escapeHtml(p.project_name)}</span>`
+    ).join(''));
+  }
+  if (a._sites.length) {
+    linkBlocks.push(a._sites.map(s =>
+      `<span class="entity-link" onclick="event.stopPropagation(); jumpToEntity('site','${s.site_id}')"><span class="entity-kind">Site</span>${escapeHtml(s.site_name)}</span>`
+    ).join(''));
+  }
+  if (a._contexts.length) {
+    linkBlocks.push(a._contexts.map(c =>
+      `<span class="entity-link" onclick="event.stopPropagation(); jumpToEntity('context','${c.context_id}')"><span class="entity-kind">${escapeHtml(ctxTypeShort(c.context_type))}</span>${escapeHtml(c.context_name)}</span>`
+    ).join(''));
+  }
+  if (a._deals.length) {
+    linkBlocks.push(a._deals.map(d =>
+      `<span class="entity-link" onclick="event.stopPropagation(); jumpToEntity('deal','${d.deal_id}')"><span class="entity-kind">Deal</span>${escapeHtml(d.deal_name)}</span>`
+    ).join(''));
+  }
+  const linkHtml = linkBlocks.length
+    ? `<div class="detail-section"><div class="detail-label">Linked entities</div><div>${linkBlocks.join('')}</div></div>`
+    : '';
+
+  let metaItems = [];
+  if (a.captured_date) metaItems.push(`Captured: <strong>${escapeHtml(a.captured_date)}</strong>`);
+  if (a.confidence) metaItems.push(`Confidence: <strong>${escapeHtml(a.confidence)}</strong>`);
+  if (a.announcement_scope) metaItems.push(`Scope: <strong>${escapeHtml(a.announcement_scope)}</strong>`);
+  if (a.source_url) metaItems.push(`Source: <a href="${escapeAttr(a.source_url)}" target="_blank" rel="noreferrer">${escapeHtml(norm(a.source))} →</a>`);
+
+  return `
+    ${a.headline ? `<div class="detail-section"><div class="detail-label">Headline</div><div class="detail-text"><strong>${escapeHtml(a.headline)}</strong></div></div>` : ''}
+    ${a.summary ? `<div class="detail-section"><div class="detail-label">Summary</div><div class="detail-text">${escapeHtml(a.summary)}</div></div>` : ''}
+    ${linkHtml}
+    ${a.notes ? `<div class="detail-section"><div class="detail-label">Notes</div><div class="detail-text" style="font-style:italic;">${escapeHtml(a.notes)}</div></div>` : ''}
+    <div class="detail-meta">${metaItems.join(' · ')}</div>
+  `;
+}
+function toggleDetail(id) {
+  const el = document.getElementById('detail-' + id);
+  if (!el) return;
+  el.classList.toggle('open');
+}
+
+/* ============ EXCEL DOWNLOAD ============ */
+function downloadExcel() {
+  const filtered = DATA.announcements.filter(passesFilter);
+  if (filtered.length === 0) { alert('No rows to export'); return; }
+  const rows = filtered.map(a => ({
+    announcement_id: a.announcement_id,
+    published_date: a.published_date,
+    headline: a.headline,
+    summary: a.summary,
+    source: norm(a.source),
+    source_url: a.source_url,
+    project_ids: a.project_ids,
+    project_names: a._projects.map(p => p.project_name).join('; '),
+    project_types: unique(a._projects.map(p => p.project_type)).join('; '),
+    project_stages: unique(a._projects.map(p => p.project_stage)).join('; '),
+    site_ids: a._sites.map(s => s.site_id).join('; '),
+    site_names: a._sites.map(s => s.site_name).join('; '),
+    states: unique([...a._sites.map(s => s.state), ...a._contexts.map(c => c.state), ...a._deals.map(d => d.state)]).join('; '),
+    context_ids: a.context_ids,
+    context_names: a._contexts.map(c => c.context_name).join('; '),
+    deal_ids: a.deal_ids,
+    announcement_scope: a.announcement_scope,
+    confidence: a.confidence,
+    new_entity_flags: a.new_entity_flags,
+    captured_date: a.captured_date,
+    notes: a.notes,
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Announcements');
+  const stamp = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `nuclear_deal_tracker_announcements_${stamp}.xlsx`);
+}
+
+/* Export the currently-filtered list in the Entity Explorer to Excel.
+   Includes all native columns from the source table plus a few derived counts
+   (e.g. # units per site, # linked deals per project) for convenience. */
+function downloadExplorerExcel() {
+  const mode = EXPLORER_MODE;
+  const list = entityListForMode(mode);
+  if (!list || list.length === 0) { alert('No items to export — no entities match the current filters.'); return; }
+
+  let rows = [];
+  let sheetName = 'Entities';
+
+  if (mode === 'site') {
+    sheetName = 'Sites';
+    rows = list.map(item => {
+      const s = item._data;
+      const units = DATA.units.filter(u => u.site_id === s.site_id);
+      const projects = DATA.projects.filter(p => p._units?.some(u => u.site_id === s.site_id));
+      const activeProjs = projects.filter(p => (p.project_status||'') === 'Active');
+      return {
+        site_id: s.site_id,
+        site_name: s.site_name,
+        state: s.state,
+        county: s.county,
+        latitude: s.latitude,
+        longitude: s.longitude,
+        operator: s.operator,
+        owner: s.owner,
+        nrc_region: s.nrc_region,
+        units_total: units.length,
+        units_operating: units.filter(u => u.asset_status === 'Operating').length,
+        units_planned: units.filter(u => u.asset_status === 'Planned').length,
+        units_shutdown: units.filter(u => u.asset_status === 'Shut Down').length,
+        nameplate_mwe_sum: units.reduce((sum, u) => sum + (parseNumber(u.nameplate_mwe) || 0), 0),
+        projects_total: projects.length,
+        projects_active: activeProjs.length,
+        project_types_at_site: unique(projects.map(p => p.project_type)).join('; '),
+        reactor_classes: unique(units.map(u => u.reactor_class)).join('; '),
+        notes: s.notes,
+      };
+    });
+  } else if (mode === 'project') {
+    sheetName = 'Projects';
+    rows = list.map(item => {
+      const p = item._data;
+      const linkedDeals = DATA.deals.filter(d => d._projectIds.includes(p.project_id));
+      const totalCapital = linkedDeals.reduce((s, d) => s + (parseNumber(d.capital_value_usd) || 0), 0);
+      const totalContribution = linkedDeals.reduce((s, d) => s + (parseNumber(d.cost_contribution_usd) || 0), 0);
+      const units = p._units || [];
+      const sites = p._sites || [];
+      return {
+        project_id: p.project_id,
+        project_name: p.project_name,
+        project_type: p.project_type,
+        layer: p.layer,
+        project_stage: p.project_stage,
+        project_status: p.project_status,
+        lead_developer: p.lead_developer,
+        size_scale_mw: p.size_scale_mw,
+        size_scale_tier: p.size_scale_tier,
+        project_cost_usd: p.project_cost_usd,
+        project_cost_source: p.project_cost_source,
+        project_cost_as_of: p.project_cost_as_of,
+        target_operation_date: p.target_operation_date,
+        nrc_application_type: p.nrc_application_type,
+        nrc_application_status: p.nrc_application_status,
+        linked_unit_ids: p.linked_unit_ids,
+        unit_count: units.length,
+        reactor_classes: unique(units.map(u => u.reactor_class)).join('; '),
+        reactor_technologies: unique(units.map(u => u.reactor_technology)).join('; '),
+        manufacturers: unique(units.map(u => u.reactor_manufacturer)).join('; '),
+        site_names: sites.map(s => s.site_name).join('; '),
+        states: unique(sites.map(s => s.state)).join('; '),
+        context_ids: p.context_ids,
+        deal_count: linkedDeals.length,
+        deal_types: unique(linkedDeals.map(d => d.deal_type)).join('; '),
+        total_capital_usd: totalCapital,
+        total_cost_contribution_usd: totalContribution,
+        notes: p.notes,
+      };
+    });
+  } else if (mode === 'deal') {
+    sheetName = 'Deals';
+    rows = list.map(item => {
+      const d = item._data;
+      const linkedProjects = d._projects || [];
+      const linkedContexts = d._contexts || [];
+      return {
+        deal_id: d.deal_id,
+        deal_name: d.deal_name,
+        deal_type: d.deal_type,
+        deal_stage: d.deal_stage,
+        economic_type: d.economic_type,
+        capital_value_usd: parseNumber(d.capital_value_usd),
+        capital_value_disclosure: d.capital_value_disclosure,
+        cost_contribution_usd: parseNumber(d.cost_contribution_usd),
+        is_portfolio_deal: d.is_portfolio_deal,
+        allocations: d.allocations,
+        term_years: d.term_years,
+        lead_entity: d.lead_entity,
+        lead_entity_type: d.lead_entity_type,
+        partners: d.partners,
+        technology_provider: d.technology_provider,
+        state: d.state,
+        region: d.region,
+        capacity_at_stake_mw: d.capacity_at_stake_mw,
+        cost_recovery: d.cost_recovery,
+        government_support: d.government_support,
+        announcement_date: d.announcement_date,
+        close_date: d.close_date,
+        project_ids: d.project_ids,
+        project_names: linkedProjects.map(p => p.project_name).join('; '),
+        context_ids: d.context_ids,
+        context_names: linkedContexts.map(c => c.context_name).join('; '),
+        source_url: d.source_url,
+        notes: d.notes,
+      };
+    });
+  } else if (mode === 'context') {
+    sheetName = 'Context Items';
+    rows = list.map(item => {
+      const c = item._data;
+      const linkedDeals = DATA.deals.filter(d => d._contextIds?.includes(c.context_id));
+      const linkedProjects = DATA.projects.filter(p => p._contextIds?.includes(c.context_id));
+      const totalExposure = linkedDeals.reduce((s, d) => s + (parseNumber(d.capital_value_usd) || 0), 0);
+      return {
+        context_id: c.context_id,
+        context_name: c.context_name,
+        context_type: c.context_type,
+        scope: c.scope,
+        state: c.state,
+        lead_entity: c.lead_entity,
+        partners: c.partners,
+        start_date: c.start_date,
+        end_date: c.end_date,
+        status: c.status,
+        headline_value_usd: parseNumber(c.headline_value_usd),
+        target_capacity_mw: c.target_capacity_mw,
+        relevant_layers: c.relevant_layers,
+        promoted_to_project_id: c.promoted_to_project_id,
+        linked_deal_count: linkedDeals.length,
+        linked_deal_capital_sum_usd: totalExposure,
+        linked_project_count: linkedProjects.length,
+        linked_project_names: linkedProjects.map(p => p.project_name).join('; '),
+        source_url: c.source_url,
+        notes: c.notes,
+      };
+    });
+  }
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  const stamp = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `nuclear_deal_tracker_${mode}s_${stamp}.xlsx`);
+}
+
+/* ============ TAB SWITCHING ============ */
+function switchTab(tab) {
+  CURRENT_TAB = tab;
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'explorer') rebuildEntityDropdown();
+}
+
+/* ============ ENTITY EXPLORER ============ */
+function setExplorerMode(mode) {
+  EXPLORER_MODE = mode;
+  // Update browse cards
+  document.querySelectorAll('.browse-card').forEach(c => c.classList.toggle('active', c.dataset.mode === mode));
+  // Legacy mode-tab buttons (still in DOM elsewhere — harmless if absent)
+  document.querySelectorAll('.mode-tab').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  const labels = { site: 'Select site', project: 'Select project', deal: 'Select deal', context: 'Select context item' };
+  document.getElementById('explorer-select-label').textContent = labels[mode];
+  document.getElementById('explorer-search').value = '';
+  document.getElementById('explorer-select').value = '';
+  document.getElementById('entity-content').innerHTML = '';
+  buildModeFilters(mode);
+  rebuildEntityDropdown();
+}
+
+/* Populate the count on each browse-by card. Called once at init time. */
+function populateBrowseCounts() {
+  const map = {
+    'browse-count-site': DATA.sites.length,
+    'browse-count-project': DATA.projects.length,
+    'browse-count-deal': DATA.deals.length,
+    'browse-count-context': DATA.contexts.length,
+  };
+  Object.entries(map).forEach(([id, n]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = n;
+  });
+}
+
+/* Build the mode-specific refinement filter row */
+function buildModeFilters(mode) {
+  const wrap = document.getElementById('explorer-mode-filters');
+  const refineLabels = { site: 'Refine sites:', project: 'Refine projects:', deal: 'Refine deals:', context: 'Refine context items:' };
+  let html = `<span class="refine-label">${refineLabels[mode]}</span>`;
+
+  if (mode === 'site') {
+    html += modeFilterDropdown('xs-state', 'State', stateOptions(), 100);
+    html += modeFilterDropdown('xs-projtype', 'Project type at site', uniqueProjectTypes(), 160);
+    html += modeFilterDropdown('xs-operator', 'Operator', uniqueOperators(), 140);
+    html += modeFilterDropdown('xs-reactorclass', 'Reactor class', uniqueReactorClasses(), 130);
+    html += modeFilterDropdown('xs-reactortech', 'Reactor technology', uniqueReactorTechs(), 150);
+    html += modeFilterDropdown('xs-manufacturer', 'Manufacturer', uniqueReactorManufacturers(), 130);
+    html += `
+      <label class="toggle-wrap" style="margin-left:8px;" title="When on, only sites that have at least one active project are shown.">
+        <input type="checkbox" id="t-only-active" ${EXPLORER_FILTERS.site.onlyActive ? 'checked' : ''} onchange="onSiteToggle('onlyActive', this.checked)">
+        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        Only sites with active projects
+      </label>`;
+  } else if (mode === 'project') {
+    html += modeFilterDropdown('xs-projtype', 'Project type', uniqueProjectTypes(), 160);
+    html += modeFilterDropdown('xs-projstage', 'Project stage', uniqueProjectStages(), 140);
+    html += modeFilterDropdown('xs-projstatus', 'Project status', uniqueProjectStatuses(), 110);
+    html += modeFilterDropdown('xs-state', 'State', stateOptions(), 90);
+    html += modeFilterDropdown('xs-reactorclass', 'Reactor class', uniqueReactorClasses(), 130);
+    html += modeFilterDropdown('xs-reactortech', 'Reactor tech', uniqueReactorTechs(), 140);
+    html += modeFilterDropdown('xs-manufacturer', 'Manufacturer', uniqueReactorManufacturers(), 130);
+    html += modeFilterDropdown('xs-dealtype', 'Has deal type', uniqueDealTypes(), 130);
+    html += modeFilterDropdown('xs-dealstage', 'Has deal stage', uniqueDealStages(), 120);
+    html += modeFilterDropdown('xs-leadentity', 'Has deal w/ lead', uniqueLeadEntities(), 150);
+    html += modeFilterDropdown('xs-leadtype', 'Lead entity type', uniqueLeadTypes(), 140);
+  } else if (mode === 'deal') {
+    html += modeFilterDropdown('xs-dealtype', 'Deal type', uniqueDealTypes(), 130);
+    html += modeFilterDropdown('xs-dealstage', 'Deal stage', uniqueDealStages(), 120);
+    html += modeFilterDropdown('xs-econtype', 'Economic type', uniqueEconTypes(), 130);
+    html += modeFilterDropdown('xs-leadentity', 'Lead entity', uniqueLeadEntities(), 150);
+    html += modeFilterDropdown('xs-leadtype', 'Lead entity type', uniqueLeadTypes(), 140);
+    html += modeFilterDropdown('xs-partner', 'Partner mentioned', uniquePartners(), 160);
+    html += modeFilterDropdown('xs-state', 'State', stateOptions(), 90);
+  } else if (mode === 'context') {
+    html += modeFilterDropdown('xs-ctxtype', 'Context type', uniqueCtxTypes(), 160);
+    html += modeFilterDropdown('xs-ctxstatus', 'Status', uniqueCtxStatuses(), 110);
+    html += modeFilterDropdown('xs-ctxscope', 'Scope', uniqueCtxScopes(), 110);
+  }
+
+  wrap.innerHTML = html;
+  // Wire dropdowns
+  wrap.querySelectorAll('.ms-wrap').forEach(w => {
+    w.querySelectorAll('.ms-dropdown input').forEach(input => {
+      input.addEventListener('change', e => {
+        const fk = e.target.dataset.filterkey;
+        const v = e.target.value;
+        const set = EXPLORER_FILTERS[mode][fk];
+        if (e.target.checked) set.add(v); else set.delete(v);
+        updateMsTriggerText(w.id, set);
+        rebuildEntityDropdown();
+      });
+    });
+  });
+  // Pre-check any prior selections
+  Object.keys(EXPLORER_FILTERS[mode]).forEach(fk => {
+    const set = EXPLORER_FILTERS[mode][fk];
+    if (set instanceof Set && set.size > 0) {
+      // try find each dropdown for this key and check + set trigger text
+      set.forEach(val => {
+        document.querySelectorAll(`.explorer-mode-filters input[data-filterkey="${fk}"][value="${cssEscape(val)}"]`).forEach(i => i.checked = true);
+      });
+      const wrapEl = document.querySelector(`.explorer-mode-filters .ms-wrap[data-filterkey-wrap="${fk}"]`);
+      if (wrapEl) updateMsTriggerText(wrapEl.id, set);
+    }
+  });
+}
+
+function onSiteToggle(key, val) {
+  EXPLORER_FILTERS.site[key] = val;
+  rebuildEntityDropdown();
+}
+
+/* Helper: build a single multi-select dropdown for a mode filter */
+function modeFilterDropdown(id, label, options, width) {
+  // The id is also used as the data-filterkey-wrap so we can find it later
+  const filterKeyMap = {
+    'xs-state': 'state',
+    'xs-projtype': EXPLORER_MODE === 'project' ? 'type' : 'projType',
+    'xs-projstage': 'stage',
+    'xs-projstatus': 'status',
+    'xs-dealtype': EXPLORER_MODE === 'deal' ? 'type' : 'dealType',
+    'xs-dealstage': EXPLORER_MODE === 'deal' ? 'stage' : 'dealStage',
+    'xs-econtype': 'economicType',
+    'xs-leadtype': 'leadType',
+    'xs-leadentity': 'leadEntity',
+    'xs-partner': 'partner',
+    'xs-operator': 'operator',
+    'xs-reactorclass': 'reactorClass',
+    'xs-reactortech': 'reactorTech',
+    'xs-manufacturer': 'reactorManufacturer',
+    'xs-ctxtype': 'type',
+    'xs-ctxstatus': 'status',
+    'xs-ctxscope': 'scope',
+  };
+  const fk = filterKeyMap[id];
+  return `
+<div class="filter-item ms-wrap" id="${id}" data-filterkey-wrap="${fk}" style="width:${width}px;flex-shrink:0;">
+  <label>${escapeHtml(label)}</label>
+  <button class="ms-trigger" onclick="toggleMs('${id}', event)"><span class="ms-trigger-text">All</span><span class="ms-trigger-arrow">▾</span></button>
+  <div class="ms-dropdown">
+    ${options.map(o => {
+      const value = typeof o === 'string' ? o : o.value;
+      const optLabel = typeof o === 'string' ? o : o.label;
+      return `<label class="ms-option"><input type="checkbox" data-filterkey="${fk}" value="${escapeAttr(value)}"> <span>${escapeHtml(optLabel)}</span></label>`;
+    }).join('')}
+  </div>
+</div>`;
+}
+
+/* Option providers */
+function uniqueProjectTypes() { return unique(DATA.projects.map(p => p.project_type)); }
+function uniqueProjectStages() { return unique(DATA.projects.map(p => p.project_stage)); }
+function uniqueProjectStatuses() { return unique(DATA.projects.map(p => p.project_status)); }
+function uniqueDealTypes() { return unique(DATA.deals.map(d => d.deal_type)); }
+function uniqueDealStages() { return unique(DATA.deals.map(d => d.deal_stage)); }
+function uniqueEconTypes() { return unique(DATA.deals.map(d => d.economic_type)); }
+function uniqueLeadTypes() { return unique(DATA.deals.map(d => d.lead_entity_type)); }
+function uniqueOperators() { return unique(DATA.sites.map(s => s.operator)); }
+function uniqueReactorClasses() { return unique(DATA.units.map(u => u.reactor_class)); }
+function uniqueReactorTechs() { return unique(DATA.units.map(u => u.reactor_technology)); }
+function uniqueReactorManufacturers() { return unique(DATA.units.map(u => u.reactor_manufacturer)); }
+function uniqueLeadEntities() {
+  // Sort by frequency desc — most common leads first
+  const counts = {};
+  DATA.deals.forEach(d => { if (d.lead_entity) counts[d.lead_entity] = (counts[d.lead_entity]||0) + 1; });
+  return Object.keys(counts).sort((a,b) => counts[b] - counts[a]);
+}
+function uniquePartners() {
+  // partners is a comma-separated free-text field. Split, dedupe, return.
+  const set = new Set();
+  DATA.deals.forEach(d => {
+    if (!d.partners) return;
+    String(d.partners).split(',').forEach(p => {
+      const t = p.trim();
+      if (t) set.add(t);
+    });
+  });
+  return Array.from(set).sort();
+}
+function uniqueCtxTypes() {
+  return unique(DATA.contexts.map(c => c.context_type)).map(t => ({ value: t, label: ctxTypeShort(t) }));
+}
+function uniqueCtxStatuses() { return unique(DATA.contexts.map(c => c.status)); }
+function uniqueCtxScopes() { return unique(DATA.contexts.map(c => c.scope)); }
+function stateOptions() {
+  const s = new Set();
+  DATA.sites.forEach(x => { if (x.state) s.add(x.state); });
+  DATA.contexts.forEach(x => { if (x.state) s.add(x.state); });
+  DATA.deals.forEach(x => { if (x.state) s.add(x.state); });
+  return Array.from(s).sort();
+}
+
+function rebuildEntityDropdown() {
+  const select = document.getElementById('explorer-select');
+  if (!select) return;
+  const query = (document.getElementById('explorer-search').value || '').toLowerCase();
+  const list = entityListForMode(EXPLORER_MODE).filter(item => {
+    if (!query) return true;
+    return (item.label + ' ' + (item.subtitle||'')).toLowerCase().includes(query);
+  });
+  const cur = select.value;
+  select.innerHTML = '<option value="">— or browse the list below —</option>' +
+    list.map(item => `<option value="${escapeAttr(item.id)}">${escapeHtml(item.label)}</option>`).join('');
+  if (cur && list.find(i => i.id === cur)) select.value = cur;
+  else {
+    loadEntityList(list);
+  }
+  // Update export button label with current count
+  const btn = document.getElementById('explorer-export-btn');
+  if (btn) {
+    const modeLabel = EXPLORER_MODE === 'context' ? 'context items' : EXPLORER_MODE + 's';
+    btn.textContent = `⬇ Download ${list.length} ${modeLabel}`;
+    btn.disabled = list.length === 0;
+  }
+}
+
+function entityListForMode(mode) {
+  if (mode === 'site') {
+    let sites = DATA.sites.slice();
+    const f = EXPLORER_FILTERS.site;
+    const activeSiteIds = new Set();
+    DATA.projects.forEach(p => {
+      if ((p.project_status||'') === 'Active') {
+        p._units?.forEach(u => { if (u?.site_id) activeSiteIds.add(u.site_id); });
+      }
+    });
+    // Index of project_types per site
+    const projTypesPerSite = {};
+    DATA.projects.forEach(p => {
+      p._units?.forEach(u => {
+        if (!u?.site_id) return;
+        if (!projTypesPerSite[u.site_id]) projTypesPerSite[u.site_id] = new Set();
+        if (p.project_type) projTypesPerSite[u.site_id].add(p.project_type);
+      });
+    });
+    // Pre-build maps from site_id → set of reactor characteristics for that site
+    const siteReactorClass = {};
+    const siteReactorTech = {};
+    const siteReactorMfg = {};
+    DATA.units.forEach(u => {
+      if (!u.site_id) return;
+      (siteReactorClass[u.site_id] = siteReactorClass[u.site_id] || new Set()).add(u.reactor_class || '');
+      (siteReactorTech[u.site_id]  = siteReactorTech[u.site_id]  || new Set()).add(u.reactor_technology || '');
+      (siteReactorMfg[u.site_id]   = siteReactorMfg[u.site_id]   || new Set()).add(u.reactor_manufacturer || '');
+    });
+    sites = sites.filter(s => {
+      const hasActive = activeSiteIds.has(s.site_id);
+      if (f.onlyActive && !hasActive) return false;
+      if (f.state.size > 0 && !f.state.has(s.state)) return false;
+      if (f.projType.size > 0) {
+        const types = projTypesPerSite[s.site_id];
+        if (!types || !Array.from(f.projType).some(t => types.has(t))) return false;
+      }
+      if (f.operator.size > 0 && !f.operator.has(s.operator)) return false;
+      if (f.reactorClass.size > 0) {
+        const set = siteReactorClass[s.site_id];
+        if (!set || !Array.from(f.reactorClass).some(v => set.has(v))) return false;
+      }
+      if (f.reactorTech.size > 0) {
+        const set = siteReactorTech[s.site_id];
+        if (!set || !Array.from(f.reactorTech).some(v => set.has(v))) return false;
+      }
+      if (f.reactorManufacturer.size > 0) {
+        const set = siteReactorMfg[s.site_id];
+        if (!set || !Array.from(f.reactorManufacturer).some(v => set.has(v))) return false;
+      }
+      return true;
+    });
+    return sites.map(s => ({
+      id: s.site_id,
+      label: s.site_name + (s.state ? ` (${s.state})` : ''),
+      subtitle: `${s.operator || ''}`,
+      _data: s,
+    })).sort((a,b) => a.label.localeCompare(b.label));
+  }
+  if (mode === 'project') {
+    const f = EXPLORER_FILTERS.project;
+    return DATA.projects.filter(p => {
+      if (f.type.size > 0 && !f.type.has(p.project_type)) return false;
+      if (f.stage.size > 0 && !f.stage.has(p.project_stage)) return false;
+      if (f.status.size > 0 && !f.status.has(p.project_status)) return false;
+      if (f.state.size > 0) {
+        const states = (p._sites || []).map(s => s.state).filter(Boolean);
+        if (!states.some(s => f.state.has(s))) return false;
+      }
+      if (f.reactorClass.size > 0) {
+        const classes = (p._units || []).map(u => u.reactor_class).filter(Boolean);
+        if (!classes.some(c => f.reactorClass.has(c))) return false;
+      }
+      if (f.reactorTech.size > 0) {
+        const techs = (p._units || []).map(u => u.reactor_technology).filter(Boolean);
+        if (!techs.some(t => f.reactorTech.has(t))) return false;
+      }
+      if (f.reactorManufacturer.size > 0) {
+        const mfgs = (p._units || []).map(u => u.reactor_manufacturer).filter(Boolean);
+        if (!mfgs.some(m => f.reactorManufacturer.has(m))) return false;
+      }
+      if (f.dealType.size > 0 || f.dealStage.size > 0 || f.leadEntity.size > 0 || f.leadType.size > 0) {
+        const linkedDeals = DATA.deals.filter(d => d._projectIds.includes(p.project_id));
+        if (f.dealType.size > 0 && !linkedDeals.some(d => f.dealType.has(d.deal_type))) return false;
+        if (f.dealStage.size > 0 && !linkedDeals.some(d => f.dealStage.has(d.deal_stage))) return false;
+        if (f.leadEntity.size > 0 && !linkedDeals.some(d => f.leadEntity.has(d.lead_entity))) return false;
+        if (f.leadType.size > 0 && !linkedDeals.some(d => f.leadType.has(d.lead_entity_type))) return false;
+      }
+      return true;
+    }).map(p => ({
+      id: p.project_id,
+      label: p.project_name,
+      subtitle: `${p.project_type || ''} · ${p.project_stage || ''} · ${p.project_status || ''}`,
+      _data: p,
+    })).sort((a,b) => a.label.localeCompare(b.label));
+  }
+  if (mode === 'deal') {
+    const f = EXPLORER_FILTERS.deal;
+    return DATA.deals.filter(d => {
+      if (f.type.size > 0 && !f.type.has(d.deal_type)) return false;
+      if (f.stage.size > 0 && !f.stage.has(d.deal_stage)) return false;
+      if (f.economicType.size > 0 && !f.economicType.has(d.economic_type)) return false;
+      if (f.leadType.size > 0 && !f.leadType.has(d.lead_entity_type)) return false;
+      if (f.leadEntity.size > 0 && !f.leadEntity.has(d.lead_entity)) return false;
+      if (f.state.size > 0 && !f.state.has(d.state)) return false;
+      if (f.partner.size > 0) {
+        // partners is comma-separated text; match if any selected partner appears
+        const dealPartners = String(d.partners || '').split(',').map(p => p.trim());
+        if (!Array.from(f.partner).some(p => dealPartners.includes(p))) return false;
+      }
+      return true;
+    }).map(d => ({
+      id: d.deal_id,
+      label: d.deal_name,
+      subtitle: `${d.deal_type || ''} · ${d.deal_stage || ''} · ${fmtMoney(parseNumber(d.capital_value_usd))}`,
+      _data: d,
+    })).sort((a,b) => a.label.localeCompare(b.label));
+  }
+  if (mode === 'context') {
+    const f = EXPLORER_FILTERS.context;
+    return DATA.contexts.filter(c => {
+      if (f.type.size > 0 && !f.type.has(c.context_type)) return false;
+      if (f.status.size > 0 && !f.status.has(c.status)) return false;
+      if (f.scope.size > 0 && !f.scope.has(c.scope)) return false;
+      return true;
+    }).map(c => ({
+      id: c.context_id,
+      label: c.context_name,
+      subtitle: `${ctxTypeShort(c.context_type)} · ${c.lead_entity || ''}`,
+      _data: c,
+    })).sort((a,b) => a.label.localeCompare(b.label));
+  }
+  return [];
+}
+
+/* Mode-specific summary KPI panel */
+function renderExplorerSummary(mode, list) {
+  const wrap = document.getElementById('explorer-summary');
+  if (!wrap) return;
+
+  let title, sub, stats;
+
+  if (mode === 'site') {
+    const ids = new Set(list.map(i => i.id));
+    const units = DATA.units.filter(u => ids.has(u.site_id));
+    const opUnits = units.filter(u => u.asset_status === 'Operating').length;
+    const plUnits = units.filter(u => u.asset_status === 'Planned').length;
+    const sdUnits = units.filter(u => u.asset_status === 'Shut Down').length;
+    const cap = units.reduce((s,u) => s + (parseNumber(u.nameplate_mwe) || 0), 0);
+    const activeProjs = DATA.projects.filter(p => p.project_status === 'Active' && p._units?.some(u => ids.has(u.site_id)));
+    const activeSites = new Set();
+    activeProjs.forEach(p => p._units?.forEach(u => { if (ids.has(u.site_id)) activeSites.add(u.site_id); }));
+    const states = new Set();
+    list.forEach(i => { if (i._data.state) states.add(i._data.state); });
+    title = `${list.length} site${list.length===1?'':'s'} match`;
+    sub = `${activeSites.size} with active projects · ${list.length - activeSites.size} operating-only`;
+    stats = [
+      { label: 'Sites shown', value: list.length, sub: '' },
+      { label: 'Reactor units', value: units.length, sub: `${opUnits} op · ${plUnits} plan · ${sdUnits} SD` },
+      { label: 'Active projects', value: activeProjs.length, sub: `at ${activeSites.size} site${activeSites.size===1?'':'s'}` },
+      { label: 'Total capacity', value: fmtMW(cap).replace(' GW',' GW').replace(' MWe',' MWe'), sub: 'nameplate (sum)' },
+      { label: 'States covered', value: states.size, sub: '' },
+    ];
+  } else if (mode === 'project') {
+    const projs = list.map(i => i._data);
+    const totalUnits = projs.reduce((s,p) => s + (p._units?.length || 0), 0);
+    const totalCap = projs.reduce((s,p) => s + (parseNumber(p.size_scale_mw) || 0), 0);
+    const projIds = new Set(projs.map(p => p.project_id));
+    const linkedDeals = DATA.deals.filter(d => d._projectIds.some(id => projIds.has(id)));
+    const totalContrib = linkedDeals.reduce((s,d) => s + (parseNumber(d.cost_contribution_usd) || 0), 0);
+    title = `${list.length} project${list.length===1?'':'s'} match`;
+    const f = EXPLORER_FILTERS.project;
+    const activeFilters = [];
+    if (f.type.size > 0) activeFilters.push(`Type: ${f.type.size}`);
+    if (f.stage.size > 0) activeFilters.push(`Stage: ${f.stage.size}`);
+    if (f.status.size > 0) activeFilters.push(`Status: ${Array.from(f.status).join(', ')}`);
+    if (f.state.size > 0) activeFilters.push(`State: ${Array.from(f.state).join(', ')}`);
+    if (f.dealType.size > 0) activeFilters.push(`Has deal type: ${Array.from(f.dealType).join(', ')}`);
+    if (f.dealStage.size > 0) activeFilters.push(`Has deal stage: ${Array.from(f.dealStage).join(', ')}`);
+    sub = activeFilters.length ? 'Filters: ' + activeFilters.join(' · ') : 'No filters applied';
+    stats = [
+      { label: 'Projects', value: list.length, sub: '' },
+      { label: 'Reactor units', value: totalUnits, sub: '' },
+      { label: 'Capacity', value: fmtMW(totalCap), sub: 'sum across projects' },
+      { label: 'Cost roll-up', value: fmtMoney(totalContrib), sub: '' },
+      { label: 'Linked deals', value: linkedDeals.length, sub: '' },
+    ];
+  } else if (mode === 'deal') {
+    const deals = list.map(i => i._data);
+    const totalCap = deals.reduce((s,d) => s + (parseNumber(d.capital_value_usd) || 0), 0);
+    const totalContrib = deals.reduce((s,d) => s + (parseNumber(d.cost_contribution_usd) || 0), 0);
+    const ppa = deals.filter(d => (d.deal_type||'').toUpperCase() === 'PPA');
+    const ppaCap = ppa.reduce((s,d) => s + (parseNumber(d.capital_value_usd) || 0), 0);
+    const closed = deals.filter(d => (d.deal_stage||'').toLowerCase() === 'closed').length;
+    title = `${list.length} deal${list.length===1?'':'s'} match`;
+    const f = EXPLORER_FILTERS.deal;
+    const af = [];
+    if (f.type.size > 0) af.push(`Type: ${f.type.size}`);
+    if (f.stage.size > 0) af.push(`Stage: ${Array.from(f.stage).join(', ')}`);
+    if (f.economicType.size > 0) af.push(`Economic type: ${f.economicType.size}`);
+    sub = af.length ? 'Filters: ' + af.join(' · ') : 'No filters applied';
+    stats = [
+      { label: 'Deals', value: list.length, sub: `${closed} closed` },
+      { label: 'Total capital', value: fmtMoney(totalCap), sub: 'all types' },
+      { label: 'PPA exposure', value: fmtMoney(ppaCap), sub: `${ppa.length} PPAs` },
+      { label: 'Cost contribution', value: fmtMoney(totalContrib), sub: 'project-funding $' },
+      { label: 'Avg deal size', value: deals.length ? fmtMoney(totalCap/deals.length) : '—', sub: '' },
+    ];
+  } else if (mode === 'context') {
+    const ctxs = list.map(i => i._data);
+    const ctxIds = new Set(ctxs.map(c => c.context_id));
+    const linkedDeals = DATA.deals.filter(d => d._contextIds.some(id => ctxIds.has(id)));
+    const linkedProjs = DATA.projects.filter(p => p._contextIds.some(id => ctxIds.has(id)));
+    const totalExposure = linkedDeals.reduce((s,d) => s + (parseNumber(d.capital_value_usd) || 0), 0);
+    title = `${list.length} context item${list.length===1?'':'s'} match`;
+    const f = EXPLORER_FILTERS.context;
+    const af = [];
+    if (f.type.size > 0) af.push(`Type: ${f.type.size}`);
+    if (f.status.size > 0) af.push(`Status: ${Array.from(f.status).join(', ')}`);
+    if (f.scope.size > 0) af.push(`Scope: ${Array.from(f.scope).join(', ')}`);
+    sub = af.length ? 'Filters: ' + af.join(' · ') : 'No filters applied';
+    stats = [
+      { label: 'Context items', value: list.length, sub: '' },
+      { label: 'Linked deals', value: linkedDeals.length, sub: '' },
+      { label: 'Linked projects', value: linkedProjs.length, sub: 'direct only' },
+      { label: 'Total exposure', value: fmtMoney(totalExposure), sub: 'capital across deals' },
+      { label: '', value: '', sub: '' },
+    ];
+  }
+
+  wrap.innerHTML = `
+<div class="explorer-summary">
+  <div class="explorer-summary-head">
+    <div>
+      <div class="explorer-summary-title">${escapeHtml(title)}</div>
+      <div class="explorer-summary-sub">${escapeHtml(sub)}</div>
+    </div>
+  </div>
+  <div class="explorer-summary-grid">
+    ${stats.map(s => s.label ? `
+      <div class="summary-stat">
+        <div class="summary-stat-label">${escapeHtml(s.label)}</div>
+        <div class="summary-stat-value">${escapeHtml(String(s.value))}</div>
+        ${s.sub ? `<div class="summary-stat-sub">${escapeHtml(s.sub)}</div>` : ''}
+      </div>
+    ` : '<div></div>').join('')}
+  </div>
+</div>`;
+}
+
+/* ============ ENTITY LIST RENDERING ============ */
+function loadEntityList(list) {
+  const container = document.getElementById('entity-list');
+  if (!container) return;
+  if (list.length === 0) {
+    container.innerHTML = `<div class="panel"><div class="empty-state">No items match the current filters.</div></div>`;
+    return;
+  }
+  // Site mode → cards. Project/Deal/Context → sortable table.
+  if (EXPLORER_MODE === 'site') {
+    const totalSites = DATA.sites.length;
+    const explainer = list.length === totalSites
+      ? `Showing all ${totalSites} sites. Click any card to see operating units, active projects, deals, and recent announcements at that site.`
+      : `Showing ${list.length} of ${totalSites} sites — narrowed by your filters above. Click any card for details.`;
+    container.innerHTML = `
+<div class="panel" style="margin-bottom:0;">
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">Sites</div>
+      <div class="panel-subtitle">${explainer}</div>
+    </div>
+  </div>
+  <div class="entity-list-grid">
+    ${list.map(item => renderSiteCard(item._data)).join('')}
+  </div>
+</div>`;
+  } else {
+    container.innerHTML = renderEntityListTable(EXPLORER_MODE, list);
+    // Wire up table sort headers
+    container.querySelectorAll('.list-table th[data-col]').forEach(th => {
+      th.addEventListener('click', e => {
+        const col = th.dataset.col;
+        const s = EXPLORER_SORT[EXPLORER_MODE];
+        if (s.col === col) s.dir = s.dir === 'asc' ? 'desc' : 'asc';
+        else { s.col = col; s.dir = 'asc'; }
+        rebuildEntityDropdown();
+      });
+    });
+  }
+}
+
+function renderSiteCard(d) {
+  const units = DATA.units.filter(u => u.site_id === d.site_id);
+  const operating = units.filter(u => u.asset_status === 'Operating').length;
+  const planned = units.filter(u => u.asset_status === 'Planned').length;
+  const shutdown = units.filter(u => u.asset_status === 'Shut Down').length;
+  const projects = DATA.projects.filter(p => p._units?.some(u => u.site_id === d.site_id));
+  const activeProjs = projects.filter(p => p.project_status === 'Active');
+  const tags = [];
+  if (operating > 0) tags.push(`<span class="tag tag-status-operating">${operating} operating</span>`);
+  if (planned > 0) tags.push(`<span class="tag tag-status-planned">${planned} planned</span>`);
+  if (shutdown > 0) tags.push(`<span class="tag tag-status-shutdown">${shutdown} shut down</span>`);
+  if (activeProjs.length > 0) {
+    const types = unique(activeProjs.map(p => p.project_type));
+    types.forEach(t => tags.push(`<span class="tag ${projTypeClass(t)}">${escapeHtml(shortenProjType(t))}</span>`));
+  }
+  return `
+<div class="entity-list-card" onclick="document.getElementById('explorer-select').value='${escapeAttr(d.site_id)}'; loadEntity()">
+  <div class="entity-list-card-name">${escapeHtml(d.site_name)}</div>
+  <div class="entity-list-card-meta"><span>${escapeHtml(d.state||'')}</span> · <span>${escapeHtml(d.operator||'')}</span></div>
+  <div class="entity-list-card-tags">${tags.join('')}</div>
+</div>`;
+}
+
+function renderEntityListTable(mode, list) {
+  // Sort according to EXPLORER_SORT
+  const sortState = EXPLORER_SORT[mode];
+  const sorted = list.slice();
+  sorted.sort((a, b) => {
+    const av = sortAccessor(mode, a._data, sortState.col);
+    const bv = sortAccessor(mode, b._data, sortState.col);
+    if (av < bv) return sortState.dir === 'asc' ? -1 : 1;
+    if (av > bv) return sortState.dir === 'asc' ? 1 : -1;
+    return 0;
+  });
+  const arrow = (col) => sortState.col === col ? (sortState.dir === 'asc' ? '↑' : '↓') : '↕';
+  const isSorted = (col) => sortState.col === col;
+
+  let header, rows;
+  if (mode === 'project') {
+    header = `<tr>
+      <th data-col="name" class="${isSorted('name')?'sorted':''}" style="width:34%">Project ${arrow('name')}</th>
+      <th data-col="type" class="${isSorted('type')?'sorted':''}" style="width:14%">Type ${arrow('type')}</th>
+      <th data-col="stage" class="${isSorted('stage')?'sorted':''}" style="width:14%">Stage ${arrow('stage')}</th>
+      <th data-col="status" class="${isSorted('status')?'sorted':''}" style="width:8%">Status ${arrow('status')}</th>
+      <th data-col="capacity" class="${isSorted('capacity')?'sorted':''} right" style="width:9%">Capacity ${arrow('capacity')}</th>
+      <th data-col="deals" class="${isSorted('deals')?'sorted':''} right" style="width:7%">Deals ${arrow('deals')}</th>
+      <th data-col="cost" class="${isSorted('cost')?'sorted':''} right" style="width:14%">Cost roll-up ${arrow('cost')}</th>
+    </tr>`;
+    rows = sorted.map((item, idx) => {
+      const p = item._data;
+      const linkedDeals = DATA.deals.filter(d => d._projectIds.includes(p.project_id));
+      const totalContrib = linkedDeals.reduce((s,d) => s + (parseNumber(d.cost_contribution_usd) || 0), 0);
+      return `
+<tr class="${idx%2?'alt':''}" onclick="document.getElementById('explorer-select').value='${escapeAttr(p.project_id)}'; loadEntity()">
+  <td><span class="ent-name">${escapeHtml(p.project_name)}</span><span class="ent-meta">${escapeHtml(p.lead_developer||'')}</span></td>
+  <td><span class="tag ${projTypeClass(p.project_type)}">${escapeHtml(shortenProjType(p.project_type||''))}</span></td>
+  <td class="muted">${escapeHtml(shortenStage(p.project_stage||''))}</td>
+  <td><span class="tag ${projStatusClass(p.project_status)}">${escapeHtml(p.project_status||'')}</span></td>
+  <td class="right muted">${p.size_scale_mw ? escapeHtml(p.size_scale_mw) + ' MW' : '—'}</td>
+  <td class="right muted">${linkedDeals.length || '—'}</td>
+  <td class="right">${totalContrib > 0 ? fmtMoney(totalContrib) : '<span class="dim">—</span>'}</td>
+</tr>`;
+    }).join('');
+  } else if (mode === 'deal') {
+    header = `<tr>
+      <th data-col="name" class="${isSorted('name')?'sorted':''}" style="width:32%">Deal ${arrow('name')}</th>
+      <th data-col="type" class="${isSorted('type')?'sorted':''}" style="width:11%">Type ${arrow('type')}</th>
+      <th data-col="stage" class="${isSorted('stage')?'sorted':''}" style="width:9%">Stage ${arrow('stage')}</th>
+      <th data-col="lead" class="${isSorted('lead')?'sorted':''}" style="width:16%">Lead entity ${arrow('lead')}</th>
+      <th data-col="capital" class="${isSorted('capital')?'sorted':''} right" style="width:12%">Capital ${arrow('capital')}</th>
+      <th data-col="contrib" class="${isSorted('contrib')?'sorted':''} right" style="width:12%">Cost contrib. ${arrow('contrib')}</th>
+      <th data-col="state" class="${isSorted('state')?'sorted':''}" style="width:8%">State ${arrow('state')}</th>
+    </tr>`;
+    rows = sorted.map((item, idx) => {
+      const d = item._data;
+      const cap = parseNumber(d.capital_value_usd);
+      const con = parseNumber(d.cost_contribution_usd);
+      return `
+<tr class="${idx%2?'alt':''}" onclick="document.getElementById('explorer-select').value='${escapeAttr(d.deal_id)}'; loadEntity()">
+  <td><span class="ent-name">${escapeHtml(d.deal_name)}</span></td>
+  <td class="muted">${escapeHtml(d.deal_type||'')}</td>
+  <td><span class="tag ${(d.deal_stage||'').toLowerCase()==='closed'?'tag-extension':'tag-uprate'}">${escapeHtml(d.deal_stage||'')}</span></td>
+  <td class="muted">${escapeHtml(d.lead_entity||'')}</td>
+  <td class="right">${fmtMoney(cap)}</td>
+  <td class="right ${con ? '' : 'dim'}">${con !== null ? fmtMoney(con) : '— (revenue)'}</td>
+  <td class="muted">${escapeHtml(d.state||'')}</td>
+</tr>`;
+    }).join('');
+  } else if (mode === 'context') {
+    header = `<tr>
+      <th data-col="name" class="${isSorted('name')?'sorted':''}" style="width:32%">Context item ${arrow('name')}</th>
+      <th data-col="type" class="${isSorted('type')?'sorted':''}" style="width:14%">Type ${arrow('type')}</th>
+      <th data-col="lead" class="${isSorted('lead')?'sorted':''}" style="width:16%">Lead entity ${arrow('lead')}</th>
+      <th data-col="status" class="${isSorted('status')?'sorted':''}" style="width:9%">Status ${arrow('status')}</th>
+      <th data-col="scope" class="${isSorted('scope')?'sorted':''}" style="width:9%">Scope ${arrow('scope')}</th>
+      <th data-col="exposure" class="${isSorted('exposure')?'sorted':''} right" style="width:11%">Deal exposure ${arrow('exposure')}</th>
+      <th data-col="links" class="${isSorted('links')?'sorted':''} right" style="width:9%">Links ${arrow('links')}</th>
+    </tr>`;
+    rows = sorted.map((item, idx) => {
+      const c = item._data;
+      const linkedDeals = DATA.deals.filter(d => d._contextIds.includes(c.context_id));
+      const linkedProjs = DATA.projects.filter(p => p._contextIds.includes(c.context_id));
+      const exposure = linkedDeals.reduce((s,d) => s + (parseNumber(d.capital_value_usd) || 0), 0);
+      const links = linkedDeals.length + linkedProjs.length;
+      return `
+<tr class="${idx%2?'alt':''}" onclick="document.getElementById('explorer-select').value='${escapeAttr(c.context_id)}'; loadEntity()">
+  <td><span class="ent-name">${escapeHtml(c.context_name)}</span></td>
+  <td><span class="tag ${ctxTypeClass(c.context_type)}">${escapeHtml(ctxTypeShort(c.context_type))}</span></td>
+  <td class="muted">${escapeHtml(c.lead_entity||'')}</td>
+  <td class="muted">${escapeHtml(c.status||'')}</td>
+  <td class="muted">${escapeHtml(c.scope||'')}</td>
+  <td class="right">${exposure > 0 ? fmtMoney(exposure) : '<span class="dim">—</span>'}</td>
+  <td class="right muted">${links || '—'}</td>
+</tr>`;
+    }).join('');
+  }
+
+  const totalForMode = (mode === 'project') ? DATA.projects.length
+                    : (mode === 'deal') ? DATA.deals.length
+                    : (mode === 'context') ? DATA.contexts.length : list.length;
+  const modeLabel = mode === 'context' ? 'context items' : mode + 's';
+  const caption = list.length === totalForMode
+    ? `All ${totalForMode} ${modeLabel}. Click any row to view details.`
+    : `${list.length} of ${totalForMode} ${modeLabel} after filtering. Click any row to view details.`;
+
+  return `
+<div class="list-table-wrap">
+  <div class="list-table-toolbar">
+    <span>${caption}</span>
+    <span>Click column header to sort</span>
+  </div>
+  <table class="list-table">
+    <thead>${header}</thead>
+    <tbody>${rows}</tbody>
+  </table>
+</div>`;
+}
+
+function sortAccessor(mode, d, col) {
+  if (mode === 'project') {
+    if (col === 'name') return (d.project_name||'').toLowerCase();
+    if (col === 'type') return d.project_type || '';
+    if (col === 'stage') return d.project_stage || '';
+    if (col === 'status') return d.project_status || '';
+    if (col === 'capacity') return parseNumber(d.size_scale_mw) || 0;
+    if (col === 'deals') return DATA.deals.filter(x => x._projectIds.includes(d.project_id)).length;
+    if (col === 'cost') return DATA.deals.filter(x => x._projectIds.includes(d.project_id)).reduce((s,x) => s + (parseNumber(x.cost_contribution_usd) || 0), 0);
+  } else if (mode === 'deal') {
+    if (col === 'name') return (d.deal_name||'').toLowerCase();
+    if (col === 'type') return d.deal_type || '';
+    if (col === 'stage') return d.deal_stage || '';
+    if (col === 'lead') return d.lead_entity || '';
+    if (col === 'capital') return parseNumber(d.capital_value_usd) || 0;
+    if (col === 'contrib') return parseNumber(d.cost_contribution_usd) || 0;
+    if (col === 'state') return d.state || '';
+  } else if (mode === 'context') {
+    if (col === 'name') return (d.context_name||'').toLowerCase();
+    if (col === 'type') return d.context_type || '';
+    if (col === 'lead') return d.lead_entity || '';
+    if (col === 'status') return d.status || '';
+    if (col === 'scope') return d.scope || '';
+    if (col === 'exposure') return DATA.deals.filter(x => x._contextIds.includes(d.context_id)).reduce((s,x) => s + (parseNumber(x.capital_value_usd) || 0), 0);
+    if (col === 'links') return DATA.deals.filter(x => x._contextIds.includes(d.context_id)).length + DATA.projects.filter(x => x._contextIds.includes(d.context_id)).length;
+  }
+  return '';
+}
+
+function loadEntity() {
+  const select = document.getElementById('explorer-select');
+  const id = select.value;
+  if (!id) {
+    document.getElementById('entity-content').innerHTML = '';
+    rebuildEntityDropdown();
+    return;
+  }
+  document.getElementById('entity-list').innerHTML = '';
+  const summary = document.getElementById('explorer-summary');
+  if (summary) summary.innerHTML = '';
+  const html = renderEntityDetail(EXPLORER_MODE, id);
+  document.getElementById('entity-content').innerHTML = html;
+}
+
+function jumpToEntity(mode, id) {
+  switchTab('explorer');
+  setExplorerMode(mode);
+  setTimeout(() => {
+    document.getElementById('explorer-select').value = id;
+    loadEntity();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, 50);
+}
+
+/* Toggle an inline detail panel for a linked entity (deal, context, site, project)
+   directly within the current entity detail view. Avoids switching modes.
+   Each call site provides a target host element id (where the detail will render). */
+function toggleEntityInline(mode, id, hostId) {
+  const host = document.getElementById(hostId);
+  if (!host) return;
+  // If already open, close it
+  if (host.classList.contains('open')) {
+    host.classList.remove('open');
+    host.innerHTML = '';
+    return;
+  }
+  // Otherwise render the inline mini-view and open
+  let html = '';
+  if (mode === 'deal') {
+    const d = INDEX.deals[id];
+    if (!d) return;
+    html = renderInlineDealCard(d);
+  } else if (mode === 'context') {
+    const c = INDEX.contexts[id];
+    if (!c) return;
+    html = renderInlineContextCard(c);
+  } else if (mode === 'site') {
+    const s = INDEX.sites[id];
+    if (!s) return;
+    html = renderInlineSiteCard(s);
+  } else if (mode === 'project') {
+    const p = INDEX.projects[id];
+    if (!p) return;
+    html = renderInlineProjectCard(p);
+  }
+  host.innerHTML = html;
+  host.classList.add('open');
+}
+
+function renderInlineDealCard(d) {
+  const linkedProjects = d._projects || [];
+  const partners = d.partners ? String(d.partners).split(',').map(s => s.trim()).filter(Boolean) : [];
+  return `
+<div class="inline-entity-card">
+  <div class="inline-entity-header">
+    <div>
+      <div class="inline-entity-kind">Deal</div>
+      <div class="inline-entity-name">${escapeHtml(d.deal_name)}</div>
+    </div>
+    <span class="inline-entity-jump" onclick="event.stopPropagation(); jumpToEntity('deal','${escapeAttr(d.deal_id)}')">Open full view →</span>
+  </div>
+  <div class="inline-entity-grid">
+    ${d.deal_type ? `<div><div class="ied-label">Type</div><div class="ied-val">${escapeHtml(d.deal_type)}</div></div>` : ''}
+    ${d.deal_stage ? `<div><div class="ied-label">Stage</div><div class="ied-val">${escapeHtml(d.deal_stage)}</div></div>` : ''}
+    ${d.economic_type ? `<div><div class="ied-label">Economic type</div><div class="ied-val">${escapeHtml(d.economic_type)}</div></div>` : ''}
+    ${d.lead_entity ? `<div><div class="ied-label">Lead entity</div><div class="ied-val">${escapeHtml(d.lead_entity)}${d.lead_entity_type ? ` <span class="ied-sub">(${escapeHtml(d.lead_entity_type)})</span>` : ''}</div></div>` : ''}
+    ${d.capital_value_usd ? `<div><div class="ied-label">Capital value</div><div class="ied-val">${escapeHtml(fmtMoney(parseNumber(d.capital_value_usd)))}${d.capital_value_disclosure ? ` <span class="ied-sub">(${escapeHtml(d.capital_value_disclosure)})</span>` : ''}</div></div>` : ''}
+    ${d.cost_contribution_usd ? `<div><div class="ied-label">Cost contribution</div><div class="ied-val">${escapeHtml(fmtMoney(parseNumber(d.cost_contribution_usd)))}</div></div>` : ''}
+    ${d.capacity_at_stake_mw ? `<div><div class="ied-label">Capacity at stake</div><div class="ied-val">${escapeHtml(d.capacity_at_stake_mw)} MW</div></div>` : ''}
+    ${d.term_years ? `<div><div class="ied-label">Term</div><div class="ied-val">${escapeHtml(d.term_years)} years</div></div>` : ''}
+    ${d.announcement_date ? `<div><div class="ied-label">Announced</div><div class="ied-val">${escapeHtml(d.announcement_date)}</div></div>` : ''}
+    ${d.close_date ? `<div><div class="ied-label">Close date</div><div class="ied-val">${escapeHtml(d.close_date)}</div></div>` : ''}
+    ${d.state ? `<div><div class="ied-label">State</div><div class="ied-val">${escapeHtml(d.state)}</div></div>` : ''}
+    ${d.cost_recovery ? `<div><div class="ied-label">Cost recovery</div><div class="ied-val">${escapeHtml(d.cost_recovery)}</div></div>` : ''}
+    ${d.government_support ? `<div><div class="ied-label">Government support</div><div class="ied-val">${escapeHtml(d.government_support)}</div></div>` : ''}
+  </div>
+  ${partners.length ? `<div class="inline-entity-row"><span class="ied-label">Partners</span> ${partners.map(p => `<span class="ied-pill">${escapeHtml(p)}</span>`).join('')}</div>` : ''}
+  ${linkedProjects.length > 1 ? `<div class="inline-entity-row"><span class="ied-label">Also linked to</span> ${linkedProjects.map(p => `<span class="ied-pill">${escapeHtml(p.project_name)}</span>`).join('')}</div>` : ''}
+  ${d.notes ? `<div class="inline-entity-notes">${escapeHtml(d.notes)}</div>` : ''}
+  ${d.source_url ? `<div class="inline-entity-row"><a href="${escapeAttr(d.source_url)}" target="_blank" rel="noopener noreferrer" class="source-link">Source ↗</a></div>` : ''}
+</div>`;
+}
+
+function renderInlineContextCard(c) {
+  return `
+<div class="inline-entity-card">
+  <div class="inline-entity-header">
+    <div>
+      <div class="inline-entity-kind">${escapeHtml(ctxTypeShort(c.context_type))}</div>
+      <div class="inline-entity-name">${escapeHtml(c.context_name)}</div>
+    </div>
+    <span class="inline-entity-jump" onclick="event.stopPropagation(); jumpToEntity('context','${escapeAttr(c.context_id)}')">Open full view →</span>
+  </div>
+  <div class="inline-entity-grid">
+    ${c.context_type ? `<div><div class="ied-label">Type</div><div class="ied-val">${escapeHtml(c.context_type)}</div></div>` : ''}
+    ${c.scope ? `<div><div class="ied-label">Scope</div><div class="ied-val">${escapeHtml(c.scope)}</div></div>` : ''}
+    ${c.status ? `<div><div class="ied-label">Status</div><div class="ied-val">${escapeHtml(c.status)}</div></div>` : ''}
+    ${c.lead_entity ? `<div><div class="ied-label">Lead entity</div><div class="ied-val">${escapeHtml(c.lead_entity)}</div></div>` : ''}
+    ${c.state ? `<div><div class="ied-label">State</div><div class="ied-val">${escapeHtml(c.state)}</div></div>` : ''}
+    ${c.start_date ? `<div><div class="ied-label">Start</div><div class="ied-val">${escapeHtml(c.start_date)}</div></div>` : ''}
+    ${c.end_date ? `<div><div class="ied-label">End</div><div class="ied-val">${escapeHtml(c.end_date)}</div></div>` : ''}
+    ${c.headline_value_usd ? `<div><div class="ied-label">Headline value</div><div class="ied-val">${escapeHtml(fmtMoney(parseNumber(c.headline_value_usd)))}</div></div>` : ''}
+    ${c.target_capacity_mw ? `<div><div class="ied-label">Target capacity</div><div class="ied-val">${escapeHtml(c.target_capacity_mw)} MW</div></div>` : ''}
+    ${c.relevant_layers ? `<div><div class="ied-label">Layers</div><div class="ied-val">${escapeHtml(c.relevant_layers)}</div></div>` : ''}
+  </div>
+  ${c.partners ? `<div class="inline-entity-row"><span class="ied-label">Partners</span> ${String(c.partners).split(',').map(p => `<span class="ied-pill">${escapeHtml(p.trim())}</span>`).join('')}</div>` : ''}
+  ${c.notes ? `<div class="inline-entity-notes">${escapeHtml(c.notes)}</div>` : ''}
+  ${c.source_url ? `<div class="inline-entity-row"><a href="${escapeAttr(c.source_url)}" target="_blank" rel="noopener noreferrer" class="source-link">Source ↗</a></div>` : ''}
+</div>`;
+}
+
+function renderInlineSiteCard(s) {
+  const units = DATA.units.filter(u => u.site_id === s.site_id);
+  const op = units.filter(u => u.asset_status === 'Operating').length;
+  const planned = units.filter(u => u.asset_status === 'Planned').length;
+  const sd = units.filter(u => u.asset_status === 'Shut Down').length;
+  return `
+<div class="inline-entity-card">
+  <div class="inline-entity-header">
+    <div>
+      <div class="inline-entity-kind">Site</div>
+      <div class="inline-entity-name">${escapeHtml(s.site_name)}</div>
+    </div>
+    <span class="inline-entity-jump" onclick="event.stopPropagation(); jumpToEntity('site','${escapeAttr(s.site_id)}')">Open full view →</span>
+  </div>
+  <div class="inline-entity-grid">
+    ${s.state ? `<div><div class="ied-label">State</div><div class="ied-val">${escapeHtml(s.state)}</div></div>` : ''}
+    ${s.county ? `<div><div class="ied-label">County</div><div class="ied-val">${escapeHtml(s.county)}</div></div>` : ''}
+    ${s.operator ? `<div><div class="ied-label">Operator</div><div class="ied-val">${escapeHtml(s.operator)}</div></div>` : ''}
+    ${s.owner ? `<div><div class="ied-label">Owner</div><div class="ied-val">${escapeHtml(s.owner)}</div></div>` : ''}
+    ${s.nrc_region ? `<div><div class="ied-label">NRC region</div><div class="ied-val">${escapeHtml(s.nrc_region)}</div></div>` : ''}
+    <div><div class="ied-label">Reactor units</div><div class="ied-val">${units.length} <span class="ied-sub">(${op} op · ${planned} plan · ${sd} SD)</span></div></div>
+  </div>
+  ${s.notes ? `<div class="inline-entity-notes">${escapeHtml(s.notes)}</div>` : ''}
+</div>`;
+}
+
+function renderInlineProjectCard(p) {
+  const linkedDeals = DATA.deals.filter(d => d._projectIds.includes(p.project_id));
+  return `
+<div class="inline-entity-card">
+  <div class="inline-entity-header">
+    <div>
+      <div class="inline-entity-kind">Project</div>
+      <div class="inline-entity-name">${escapeHtml(p.project_name)}</div>
+    </div>
+    <span class="inline-entity-jump" onclick="event.stopPropagation(); jumpToEntity('project','${escapeAttr(p.project_id)}')">Open full view →</span>
+  </div>
+  <div class="inline-entity-grid">
+    ${p.project_type ? `<div><div class="ied-label">Type</div><div class="ied-val">${escapeHtml(p.project_type)}</div></div>` : ''}
+    ${p.project_stage ? `<div><div class="ied-label">Stage</div><div class="ied-val">${escapeHtml(p.project_stage)}</div></div>` : ''}
+    ${p.project_status ? `<div><div class="ied-label">Status</div><div class="ied-val">${escapeHtml(p.project_status)}</div></div>` : ''}
+    ${p.lead_developer ? `<div><div class="ied-label">Lead developer</div><div class="ied-val">${escapeHtml(p.lead_developer)}</div></div>` : ''}
+    ${p.size_scale_mw ? `<div><div class="ied-label">Capacity</div><div class="ied-val">${escapeHtml(p.size_scale_mw)} MW${p.size_scale_tier ? ` <span class="ied-sub">(${escapeHtml(p.size_scale_tier)})</span>` : ''}</div></div>` : ''}
+    ${p.target_operation_date ? `<div><div class="ied-label">Target operation</div><div class="ied-val">${escapeHtml(p.target_operation_date)}</div></div>` : ''}
+    ${p.nrc_application_type ? `<div><div class="ied-label">NRC application</div><div class="ied-val">${escapeHtml(p.nrc_application_type)}${p.nrc_application_status ? ` <span class="ied-sub">(${escapeHtml(p.nrc_application_status)})</span>` : ''}</div></div>` : ''}
+    ${linkedDeals.length ? `<div><div class="ied-label">Linked deals</div><div class="ied-val">${linkedDeals.length}</div></div>` : ''}
+    ${p._units?.length ? `<div><div class="ied-label">Reactor units</div><div class="ied-val">${p._units.length}</div></div>` : ''}
+  </div>
+  ${p.notes ? `<div class="inline-entity-notes">${escapeHtml(p.notes)}</div>` : ''}
+</div>`;
+}
+
+/* ============ ENTITY DETAIL VIEWS ============ */
+function renderEntityDetail(mode, id) {
+  if (mode === 'site') return renderSiteView(INDEX.sites[id]);
+  if (mode === 'project') return renderProjectView(INDEX.projects[id]);
+  if (mode === 'deal') return renderDealView(INDEX.deals[id]);
+  if (mode === 'context') return renderContextView(INDEX.contexts[id]);
+  return '';
+}
+
+function renderSiteView(site) {
+  if (!site) return `<div class="empty-state">Site not found.</div>`;
+  const units = DATA.units.filter(u => u.site_id === site.site_id);
+  const projects = DATA.projects.filter(p => p._units?.some(u => u.site_id === site.site_id));
+  const projectIds = new Set(projects.map(p => p.project_id));
+  const deals = DATA.deals.filter(d => d._projectIds.some(id => projectIds.has(id)));
+  // Contexts via projects + via deals
+  const ctxIds = new Set();
+  projects.forEach(p => p._contextIds.forEach(id => ctxIds.add(id)));
+  deals.forEach(d => d._contextIds.forEach(id => ctxIds.add(id)));
+  const contexts = Array.from(ctxIds).map(id => INDEX.contexts[id]).filter(Boolean);
+  const announcements = DATA.announcements.filter(a =>
+    a._sites.some(s => s.site_id === site.site_id) ||
+    a._projectIds.some(id => projectIds.has(id))
+  );
+
+  // Cost roll-up
+  const totalCapital = deals.reduce((s,d) => s + (parseNumber(d.capital_value_usd) || 0), 0);
+  const totalContribution = deals.reduce((s,d) => s + (parseNumber(d.cost_contribution_usd) || 0), 0);
+
+  return `
+<div class="entity-detail">
+  <div class="entity-header">
+    <div class="entity-kind-label">SITE</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:280px;">
+        <h2 class="entity-title">${escapeHtml(site.site_name)}</h2>
+        <div class="entity-subtitle">
+          ${site.county ? escapeHtml(site.county) + ', ' : ''}${escapeHtml(site.state||'')}
+          ${site.latitude ? ` · ${escapeHtml(site.latitude)}°, ${escapeHtml(site.longitude||'')}°` : ''}
+          ${site.nrc_region ? ' · ' + escapeHtml(site.nrc_region) : ''}
+        </div>
+        ${site.operator ? `<div class="entity-subtitle" style="margin-top:2px;">Operator: <strong>${escapeHtml(site.operator)}</strong>${site.owner && site.owner !== site.operator ? ` · Owner: <strong>${escapeHtml(site.owner)}</strong>` : ''}</div>` : ''}
+      </div>
+      <div class="entity-stats">
+        <div class="entity-stat"><div class="entity-stat-label">Units</div><div class="entity-stat-value">${units.length}</div></div>
+        <div class="entity-stat"><div class="entity-stat-label">Projects</div><div class="entity-stat-value">${projects.length}</div></div>
+        <div class="entity-stat"><div class="entity-stat-label">Deals</div><div class="entity-stat-value">${deals.length}</div></div>
+      </div>
+    </div>
+    ${site.notes ? `<div class="entity-subtitle" style="margin-top:10px;line-height:1.5;font-style:italic;">${escapeHtml(site.notes)}</div>` : ''}
+  </div>
+
+  <div class="entity-section">
+    <div class="section-label">Reactor units (${units.length})</div>
+    ${units.length === 0 ? '<div class="entity-section-empty">No units recorded.</div>' :
+      units.map(u => `
+        <div class="unit-card">
+          <div class="name">${escapeHtml(u.unit_name)}</div>
+          <span class="tag ${unitStatusClass(u.asset_status)}" style="text-align:center;">${escapeHtml(u.asset_status||'—')}</span>
+          <div class="meta">${escapeHtml(u.reactor_technology||'')}</div>
+          <div class="meta">${u.nameplate_mwe ? escapeHtml(u.nameplate_mwe)+' MWe' : ''}${u.commercial_operation_date ? ' · COD ' + escapeHtml(u.commercial_operation_date) : ''}${u.current_license_expiration ? ' · License ' + escapeHtml(u.current_license_expiration) : ''}</div>
+          <div></div>
+        </div>
+      `).join('')}
+  </div>
+
+  <div class="entity-section">
+    <div class="section-label">Active projects (${projects.filter(p => p.project_status === 'Active').length})</div>
+    ${projects.length === 0 ? '<div class="entity-section-empty">No current development activity.</div>' :
+      projects.map(p => renderProjectCard(p)).join('')}
+  </div>
+
+  ${deals.length > 0 ? `
+  <div class="entity-section">
+    <div class="section-label">Associated deals (${deals.length})</div>
+    ${renderDealsTable(deals, totalCapital, totalContribution)}
+  </div>` : ''}
+
+  ${contexts.length > 0 ? `
+  <div class="entity-section">
+    <div class="section-label">Linked context items (${contexts.length})</div>
+    ${contexts.map(c => renderContextCard(c)).join('')}
+  </div>` : ''}
+
+  <div class="entity-section">
+    <div class="section-label">Announcement timeline (${announcements.length})</div>
+    ${renderAnnouncementTimeline(announcements)}
+  </div>
+</div>`;
+}
+
+function renderProjectView(p) {
+  if (!p) return `<div class="empty-state">Project not found.</div>`;
+  const sites = p._sites || [];
+  const units = p._units || [];
+  const deals = DATA.deals.filter(d => d._projectIds.includes(p.project_id));
+  const ctxIds = new Set([...p._contextIds]);
+  deals.forEach(d => d._contextIds.forEach(id => ctxIds.add(id)));
+  const contexts = Array.from(ctxIds).map(id => INDEX.contexts[id]).filter(Boolean);
+  const announcements = DATA.announcements.filter(a => a._projectIds.includes(p.project_id));
+  const totalCapital = deals.reduce((s,d) => s + (parseNumber(d.capital_value_usd) || 0), 0);
+  const totalContribution = deals.reduce((s,d) => s + (parseNumber(d.cost_contribution_usd) || 0), 0);
+
+  return `
+<div class="entity-detail">
+  <div class="entity-header">
+    <div class="entity-kind-label">PROJECT</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:280px;">
+        <h2 class="entity-title">${escapeHtml(p.project_name)}</h2>
+        ${p.lead_developer ? `<div class="entity-subtitle">Lead developer: <strong>${escapeHtml(p.lead_developer)}</strong></div>` : ''}
+        <div class="entity-tags">
+          ${p.project_type ? `<span class="tag ${projTypeClass(p.project_type)}">${escapeHtml(shortenProjType(p.project_type))}</span>` : ''}
+          ${p.project_stage ? `<span class="tag tag-stage">${escapeHtml(shortenStage(p.project_stage))}</span>` : ''}
+          ${p.project_status ? `<span class="tag ${projStatusClass(p.project_status)}">${escapeHtml(p.project_status)}</span>` : ''}
+          ${p.size_scale_tier ? `<span class="tag tag-scope">${escapeHtml(p.size_scale_tier)}</span>` : ''}
+        </div>
+      </div>
+      <div class="entity-stats">
+        ${p.size_scale_mw ? `<div class="entity-stat"><div class="entity-stat-label">Capacity</div><div class="entity-stat-value">${escapeHtml(p.size_scale_mw)}</div><div class="entity-stat-sub">MWe</div></div>` : ''}
+        ${p.target_operation_date ? `<div class="entity-stat"><div class="entity-stat-label">Target</div><div class="entity-stat-value">${escapeHtml(p.target_operation_date)}</div></div>` : ''}
+        ${totalContribution > 0 ? `<div class="entity-stat"><div class="entity-stat-label">Cost roll-up</div><div class="entity-stat-value">${fmtMoney(totalContribution)}</div></div>` : ''}
+      </div>
+    </div>
+    ${p.notes ? `<div class="entity-subtitle" style="margin-top:10px;line-height:1.5;font-style:italic;">${escapeHtml(p.notes)}</div>` : ''}
+  </div>
+
+  ${sites.length > 0 ? `
+  <div class="entity-section">
+    <div class="section-label">Located at</div>
+    ${sites.map(s => `
+      <div class="parent-link-row" onclick="jumpToEntity('site','${escapeAttr(s.site_id)}')">
+        <span class="parent-link-kind">Site →</span>
+        <strong>${escapeHtml(s.site_name)}</strong>
+        <span style="color:var(--slate-500);">·</span>
+        <span style="color:var(--slate-500);">${escapeHtml(s.county || '')}${s.state ? ', ' + escapeHtml(s.state) : ''}</span>
+        ${s.operator ? `<span style="color:var(--slate-500);">·</span><span style="color:var(--slate-500);">Operator: ${escapeHtml(s.operator)}</span>` : ''}
+        <span class="parent-link-arrow">View site →</span>
+      </div>
+    `).join('')}
+  </div>` : ''}
+
+  ${units.length > 0 ? `
+  <div class="entity-section">
+    <div class="section-label">Reactor units in this project (${units.length})</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:6px;">
+      ${units.map(u => `
+        <div class="unit-card" style="grid-template-columns:1fr 90px 80px;">
+          <span class="name">${escapeHtml(u.unit_name)}</span>
+          <span class="tag ${unitStatusClass(u.asset_status)}" style="text-align:center;">${escapeHtml(u.asset_status||'—')}</span>
+          <span class="meta" style="text-align:right;">${u.nameplate_mwe ? escapeHtml(u.nameplate_mwe)+' MWe' : ''}</span>
+        </div>
+      `).join('')}
+    </div>
+  </div>` : ''}
+
+  ${deals.length > 0 ? `
+  <div class="entity-section">
+    <div class="section-label">Associated deals (${deals.length})</div>
+    ${renderDealsTable(deals, totalCapital, totalContribution)}
+  </div>` : ''}
+
+  ${contexts.length > 0 ? `
+  <div class="entity-section">
+    <div class="section-label">Linked context items (${contexts.length})</div>
+    ${contexts.map(c => renderContextCard(c)).join('')}
+  </div>` : ''}
+
+  <div class="entity-section">
+    <div class="section-label">Announcement timeline (${announcements.length})</div>
+    ${renderAnnouncementTimeline(announcements)}
+  </div>
+</div>`;
+}
+
+function renderDealView(d) {
+  if (!d) return `<div class="empty-state">Deal not found.</div>`;
+  const projects = d._projects || [];
+  const contexts = d._contexts || [];
+  // Sites via projects
+  const siteIds = new Set();
+  projects.forEach(p => p._sites?.forEach(s => siteIds.add(s.site_id)));
+  const sites = Array.from(siteIds).map(id => INDEX.sites[id]).filter(Boolean);
+  const announcements = DATA.announcements.filter(a => a._dealIds.includes(d.deal_id));
+
+  return `
+<div class="entity-detail">
+  <div class="entity-header">
+    <div class="entity-kind-label">DEAL</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:280px;">
+        <h2 class="entity-title">${escapeHtml(d.deal_name)}</h2>
+        ${d.lead_entity ? `<div class="entity-subtitle">Lead entity: <strong>${escapeHtml(d.lead_entity)}</strong>${d.partners ? ' · Partners: ' + escapeHtml(d.partners) : ''}</div>` : ''}
+        <div class="entity-tags">
+          ${d.deal_type ? `<span class="tag tag-stage">${escapeHtml(d.deal_type)}</span>` : ''}
+          ${d.economic_type ? `<span class="tag tag-scope">${escapeHtml(d.economic_type)}</span>` : ''}
+          ${d.deal_stage ? `<span class="tag ${(d.deal_stage||'').toLowerCase()==='closed'?'tag-extension':'tag-amber'}">${escapeHtml(d.deal_stage)}</span>` : ''}
+          ${d.confirmation_status ? `<span class="tag ${(d.confirmation_status||'').toLowerCase().includes('proposed')?'tag-proposed':'tag-confirmed'}">${escapeHtml(d.confirmation_status)}</span>` : ''}
+        </div>
+      </div>
+      <div class="entity-stats">
+        ${d.capital_value_usd ? `<div class="entity-stat"><div class="entity-stat-label">Capital value</div><div class="entity-stat-value">${fmtMoney(parseNumber(d.capital_value_usd))}</div>${d.capital_value_disclosure ? `<div class="entity-stat-sub">${escapeHtml(d.capital_value_disclosure)}</div>` : ''}</div>` : ''}
+        ${d.term_years ? `<div class="entity-stat"><div class="entity-stat-label">Term</div><div class="entity-stat-value">${escapeHtml(d.term_years)} yrs</div></div>` : ''}
+        ${d.capacity_at_stake_mw ? `<div class="entity-stat"><div class="entity-stat-label">Capacity</div><div class="entity-stat-value">${escapeHtml(d.capacity_at_stake_mw)}</div><div class="entity-stat-sub">MW</div></div>` : ''}
+      </div>
+    </div>
+    ${d.notes ? `<div class="entity-subtitle" style="margin-top:10px;line-height:1.5;font-style:italic;">${escapeHtml(d.notes)}</div>` : ''}
+  </div>
+
+  ${projects.length > 0 ? `
+  <div class="entity-section">
+    <div class="section-label">Project${projects.length>1?'s':''} funded</div>
+    ${projects.map(p => `
+      <div class="parent-link-row" onclick="jumpToEntity('project','${escapeAttr(p.project_id)}')" style="margin-bottom:6px;">
+        <span class="tag ${projTypeClass(p.project_type)}">${escapeHtml(shortenProjType(p.project_type))}</span>
+        <strong>${escapeHtml(p.project_name)}</strong>
+        <span style="color:var(--slate-500);">·</span>
+        <span style="color:var(--slate-500);">${escapeHtml(shortenStage(p.project_stage||''))} · ${escapeHtml(p.project_status||'')}</span>
+        <span class="parent-link-arrow">View →</span>
+      </div>
+    `).join('')}
+    ${sites.length > 0 ? sites.map(s => `
+      <div style="display:flex;align-items:center;gap:10px;padding:6px 12px;font-size:11px;color:var(--slate-300);" onclick="jumpToEntity('site','${escapeAttr(s.site_id)}')">
+        <span>↳ at Site:</span>
+        <span style="color:var(--slate-700);cursor:pointer;">${escapeHtml(s.site_name)}, ${escapeHtml(s.state||'')}</span>
+        <span style="margin-left:auto;color:var(--navy-300);cursor:pointer;font-size:10px;">View site →</span>
+      </div>
+    `).join('') : ''}
+  </div>` : ''}
+
+  ${contexts.length > 0 ? `
+  <div class="entity-section">
+    <div class="section-label">Linked context items (${contexts.length})</div>
+    ${contexts.map(c => renderContextCard(c)).join('')}
+  </div>` : ''}
+
+  <div class="entity-section">
+    <div class="section-label">Announcements about this deal (${announcements.length})</div>
+    ${renderAnnouncementTimeline(announcements)}
+  </div>
+</div>`;
+}
+
+function renderContextView(c) {
+  if (!c) return `<div class="empty-state">Context not found.</div>`;
+  const directProjects = DATA.projects.filter(p => p._contextIds.includes(c.context_id));
+  const deals = DATA.deals.filter(d => d._contextIds.includes(c.context_id));
+  // Indirect projects via deals
+  const directProjIds = new Set(directProjects.map(p => p.project_id));
+  const indirectProjIds = new Set();
+  deals.forEach(d => d._projectIds.forEach(pid => { if (!directProjIds.has(pid)) indirectProjIds.add(pid); }));
+  const indirectProjects = Array.from(indirectProjIds).map(id => INDEX.projects[id]).filter(Boolean);
+  const announcements = DATA.announcements.filter(a => a._contextIds.includes(c.context_id));
+
+  const totalExposure = deals.reduce((s,d) => s + (parseNumber(d.capital_value_usd) || 0), 0);
+  // Count states via deals + via direct projects
+  const states = new Set();
+  deals.forEach(d => { if (d.state) states.add(d.state); });
+  directProjects.forEach(p => p._sites?.forEach(s => { if (s.state) states.add(s.state); }));
+  indirectProjects.forEach(p => p._sites?.forEach(s => { if (s.state) states.add(s.state); }));
+  if (c.state) states.add(c.state);
+
+  return `
+<div class="entity-detail">
+  <div class="entity-header">
+    <div class="entity-kind-label">CONTEXT ITEM</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:280px;">
+        <h2 class="entity-title">${escapeHtml(c.context_name)}</h2>
+        ${c.lead_entity ? `<div class="entity-subtitle">Lead entity: <strong>${escapeHtml(c.lead_entity)}</strong>${c.start_date ? ' · Started ' + escapeHtml(c.start_date) : ''}</div>` : ''}
+        <div class="entity-tags">
+          <span class="tag ${ctxTypeClass(c.context_type)}">${escapeHtml(ctxTypeShort(c.context_type))}</span>
+          ${c.status ? `<span class="tag ${projStatusClass(c.status)}">${escapeHtml(c.status)}</span>` : ''}
+          ${c.scope ? `<span class="tag tag-scope">${escapeHtml(c.scope)}</span>` : ''}
+        </div>
+      </div>
+      <div class="entity-stats">
+        ${totalExposure > 0 ? `<div class="entity-stat"><div class="entity-stat-label">Deal exposure</div><div class="entity-stat-value">${fmtMoney(totalExposure)}</div></div>` : ''}
+        <div class="entity-stat"><div class="entity-stat-label">Deals</div><div class="entity-stat-value">${deals.length}</div></div>
+        ${states.size > 0 ? `<div class="entity-stat"><div class="entity-stat-label">States</div><div class="entity-stat-value">${states.size}</div><div class="entity-stat-sub">${Array.from(states).join(', ')}</div></div>` : ''}
+      </div>
+    </div>
+    ${c.notes ? `<div class="entity-subtitle" style="margin-top:10px;line-height:1.5;font-style:italic;">${escapeHtml(c.notes)}</div>` : ''}
+  </div>
+
+  ${deals.length > 0 ? `
+  <div class="entity-section">
+    <div class="section-label">Deals in this ${ctxTypeShort(c.context_type).toLowerCase()} (${deals.length})</div>
+    <div class="ctx-deal-hint">Click a row to expand details inline. Click again to collapse.</div>
+    <table class="deals-table">
+      <thead><tr><th>Deal</th><th>Type / stage</th><th>Project / Counterparty</th><th class="right">Capital</th></tr></thead>
+      <tbody>
+        ${deals.map(d => {
+          const proj = d._projects[0];
+          const projLabel = proj ? proj.project_name : (d.partners || d.lead_entity || '—');
+          const projState = proj?._sites?.[0]?.state || d.state || '';
+          const hostId = `inline-host-deal-ctx-${escapeAttr(d.deal_id)}`;
+          return `<tr class="inline-toggle-row" onclick="toggleEntityInline('deal','${escapeAttr(d.deal_id)}','${hostId}')">
+            <td>${escapeHtml(d.deal_name)}</td>
+            <td><span class="tag tag-stage">${escapeHtml(d.deal_type||'')}</span> · ${escapeHtml(d.deal_stage||'')}</td>
+            <td class="muted">${escapeHtml(projLabel)}${projState ? ' · ' + escapeHtml(projState) : ''}</td>
+            <td class="right">${fmtMoney(parseNumber(d.capital_value_usd))}</td>
+          </tr>
+          <tr class="inline-host-row"><td colspan="4"><div class="inline-entity-host" id="${hostId}"></div></td></tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>` : ''}
+
+  ${(directProjects.length + indirectProjects.length) > 0 ? `
+  <div class="entity-section">
+    <div class="section-label">Projects touched (${directProjects.length} direct${indirectProjects.length>0 ? `, ${indirectProjects.length} via deals` : ''})</div>
+    ${directProjects.map(p => `
+      <div class="parent-link-row" onclick="jumpToEntity('project','${escapeAttr(p.project_id)}')" style="margin-bottom:6px;">
+        <span class="tag ${projTypeClass(p.project_type)}">${escapeHtml(shortenProjType(p.project_type))}</span>
+        <strong>${escapeHtml(p.project_name)}</strong>
+        <span style="color:var(--slate-500);font-size:11px;">·</span>
+        <span style="color:var(--slate-500);font-size:11px;">direct link</span>
+        <span class="parent-link-arrow">View →</span>
+      </div>
+    `).join('')}
+    ${indirectProjects.map(p => {
+      const dealsLinking = deals.filter(d => d._projectIds.includes(p.project_id));
+      return `
+      <div class="parent-link-row" onclick="jumpToEntity('project','${escapeAttr(p.project_id)}')" style="margin-bottom:6px;">
+        <span class="tag ${projTypeClass(p.project_type)}">${escapeHtml(shortenProjType(p.project_type))}</span>
+        <strong>${escapeHtml(p.project_name)}</strong>
+        <span style="color:var(--slate-500);font-size:11px;">·</span>
+        <span style="color:var(--slate-500);font-size:11px;">via ${dealsLinking.length === 1 ? escapeHtml(dealsLinking[0].deal_name) : dealsLinking.length + ' deals'}</span>
+        <span class="parent-link-arrow">View →</span>
+      </div>
+    `}).join('')}
+  </div>` : ''}
+
+  <div class="entity-section">
+    <div class="section-label">Announcements about this ${ctxTypeShort(c.context_type).toLowerCase()} (${announcements.length})</div>
+    ${renderAnnouncementTimeline(announcements)}
+  </div>
+</div>`;
+}
+
+/* ============ SHARED RENDERS ============ */
+function renderProjectCard(p) {
+  const isRestart = (p.project_type||'').toLowerCase().includes('restart');
+  const hostId = `inline-host-proj-${escapeAttr(p.project_id)}`;
+  return `
+<div class="project-card-wrap">
+  <div class="project-card ${isRestart ? 'restart' : ''}" onclick="toggleEntityInline('project','${escapeAttr(p.project_id)}','${hostId}')">
+    <div class="project-card-head">
+      <div>
+        <div class="project-card-name">${escapeHtml(p.project_name)}</div>
+        <div class="project-card-meta">${p.lead_developer ? 'Lead developer: ' + escapeHtml(p.lead_developer) : ''}${p._units?.length ? ' · Linked units: ' + p._units.length : ''}</div>
+      </div>
+      <div class="project-card-tags">
+        ${p.project_type ? `<span class="tag ${projTypeClass(p.project_type)}">${escapeHtml(shortenProjType(p.project_type))}</span>` : ''}
+        ${p.project_stage ? `<span class="tag tag-stage">${escapeHtml(shortenStage(p.project_stage))}</span>` : ''}
+        ${p.project_status ? `<span class="tag ${projStatusClass(p.project_status)}">${escapeHtml(p.project_status)}</span>` : ''}
+      </div>
+    </div>
+    <div class="project-card-grid">
+      ${p.size_scale_mw ? `<div><span>Capacity</span>${escapeHtml(p.size_scale_mw)} MWe</div>` : ''}
+      ${p.project_cost_usd ? `<div><span>Project cost</span>${fmtMoney(parseNumber(p.project_cost_usd))}</div>` : ''}
+      ${p.target_operation_date ? `<div><span>Target operation</span>${escapeHtml(p.target_operation_date)}</div>` : ''}
+      ${p.nrc_application_status ? `<div><span>NRC</span>${escapeHtml(p.nrc_application_type||'')} · ${escapeHtml(p.nrc_application_status||'')}</div>` : ''}
+    </div>
+  </div>
+  <div class="inline-entity-host" id="${hostId}"></div>
+</div>`;
+}
+
+function renderDealsTable(deals, totalCapital, totalContribution) {
+  return `
+<div class="ctx-deal-hint">Click a row to expand deal details inline. Click again to collapse.</div>
+<table class="deals-table">
+  <thead><tr>
+    <th>Deal</th>
+    <th>Type / stage</th>
+    <th>Lead entity</th>
+    <th class="right">Capital</th>
+    <th class="right">Cost contribution</th>
+  </tr></thead>
+  <tbody>
+    ${deals.map(d => {
+      const cap = parseNumber(d.capital_value_usd);
+      const con = parseNumber(d.cost_contribution_usd);
+      const hostId = `inline-host-deal-proj-${escapeAttr(d.deal_id)}`;
+      return `<tr class="inline-toggle-row" onclick="toggleEntityInline('deal','${escapeAttr(d.deal_id)}','${hostId}')">
+        <td>${escapeHtml(d.deal_name)}</td>
+        <td><span class="tag tag-stage">${escapeHtml(d.deal_type||'')}</span> · ${escapeHtml(d.deal_stage||'')}</td>
+        <td class="muted">${escapeHtml(d.lead_entity||'')}</td>
+        <td class="right">${fmtMoney(cap)}</td>
+        <td class="right ${con ? '' : 'dim'}" style="${con ? 'font-weight:600;' : ''}">${con !== null ? fmtMoney(con) : '— (revenue)'}</td>
+      </tr>
+      <tr class="inline-host-row"><td colspan="5"><div class="inline-entity-host" id="${hostId}"></div></td></tr>`;
+    }).join('')}
+    <tr class="rollup">
+      <td colspan="3">Project cost roll-up</td>
+      <td class="right dim" style="font-size:10px;">${fmtMoney(totalCapital)} total deal value</td>
+      <td class="right">${fmtMoney(totalContribution)}</td>
+    </tr>
+  </tbody>
+</table>`;
+}
+
+function renderContextCard(c) {
+  const hostId = `inline-host-ctx-${escapeAttr(c.context_id)}`;
+  return `
+<div class="context-card-wrap">
+  <div class="context-card" onclick="toggleEntityInline('context','${escapeAttr(c.context_id)}','${hostId}')">
+    <div class="context-card-kind">${escapeHtml(ctxTypeShort(c.context_type))}</div>
+    <div class="context-card-name">${escapeHtml(c.context_name)}</div>
+  </div>
+  <div class="inline-entity-host" id="${hostId}"></div>
+</div>`;
+}
+
+function renderAnnouncementTimeline(anns) {
+  if (anns.length === 0) return '<div class="entity-section-empty">No announcements yet.</div>';
+  // sort newest first
+  const sorted = anns.slice().sort((a,b) => {
+    const da = parseDate(a.published_date)?.getTime() || 0;
+    const db = parseDate(b.published_date)?.getTime() || 0;
+    return db - da;
+  });
+  const max = 8;
+  const visible = sorted.slice(0, max);
+  const more = sorted.length - visible.length;
+  return `
+<div style="display:flex;flex-direction:column;gap:6px;">
+  ${visible.map(a => {
+    const detail = renderFeedDetail(a);
+    const sourceUrl = a.source_url || '';
+    const sourceCell = sourceUrl
+      ? ` · <a href="${escapeAttr(sourceUrl)}" target="_blank" rel="noopener noreferrer" class="source-link" onclick="event.stopPropagation();">${escapeHtml(norm(a.source))} ↗</a>`
+      : ` · ${escapeHtml(norm(a.source))}`;
+    return `
+    <div class="entity-ann-card" id="entity-ann-${escapeAttr(a.announcement_id)}">
+      <div class="timeline-item" onclick="toggleEntityAnnouncement('${escapeAttr(a.announcement_id)}')">
+        <div class="timeline-date">${escapeHtml(a.published_date||'')}${sourceCell}<span class="timeline-toggle-hint">click to expand ▾</span></div>
+        <div class="timeline-summary">${escapeHtml(a.summary || a.headline || '')}</div>
+      </div>
+      <div class="entity-ann-detail" id="entity-ann-detail-${escapeAttr(a.announcement_id)}">${detail}</div>
+    </div>`;
+  }).join('')}
+  ${more > 0 ? `<div style="font-size:10px;color:var(--slate-300);font-style:italic;text-align:center;padding:4px 0;">… ${more} more</div>` : ''}
+</div>`;
+}
+
+/* Toggle inline announcement detail within an entity view (no tab switch). */
+function toggleEntityAnnouncement(id) {
+  const el = document.getElementById('entity-ann-detail-' + id);
+  if (!el) return;
+  el.classList.toggle('open');
+  // Update the click hint chevron
+  const card = document.getElementById('entity-ann-' + id);
+  if (card) {
+    const hint = card.querySelector('.timeline-toggle-hint');
+    if (hint) hint.textContent = el.classList.contains('open') ? 'click to collapse ▴' : 'click to expand ▾';
+  }
+}
+
+/* Legacy name kept for any callers — now also expands inline if on the explorer tab. */
+function filterFeedToAnnouncement(id) {
+  // If we're inside the entity explorer view and this announcement has an inline card,
+  // expand it in place instead of switching tabs.
+  const inlineDetail = document.getElementById('entity-ann-detail-' + id);
+  if (inlineDetail) {
+    inlineDetail.classList.add('open');
+    inlineDetail.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const card = document.getElementById('entity-ann-' + id);
+    if (card) {
+      const hint = card.querySelector('.timeline-toggle-hint');
+      if (hint) hint.textContent = 'click to collapse ▴';
+    }
+    return;
+  }
+  // Otherwise fall back to old behavior — jump to feed and open detail there.
+  switchTab('feed');
+  setTimeout(() => {
+    const el = document.getElementById('detail-' + id);
+    if (el) {
+      el.classList.add('open');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 100);
+}
+
+/* ============ REVIEW BADGE ============ */
+function initReviewBadge() {
+  // Count: announcements with confidence=Medium + new_entity_flags + scraper-proposed deals
+  const lowConf = DATA.announcements.filter(a => (a.confidence||'').toLowerCase() === 'medium').length;
+  const newEnt = DATA.announcements.filter(a => a.new_entity_flags).length;
+  const proposed = DATA.deals.filter(d => (d.confirmation_status||'').toLowerCase().includes('proposed')).length;
+  const total = lowConf + newEnt + proposed;
+  const badge = document.getElementById('review-badge');
+  if (total > 0) {
+    badge.textContent = `${total} needs review`;
+    badge.classList.remove('zero');
+  } else {
+    badge.textContent = '— needs review';
+    badge.classList.add('zero');
+  }
+}
+function openReviewQueue() {
+  // Toggle the "show needs review" filter and switch to feed
+  switchTab('feed');
+  document.getElementById('f-needs-review').checked = true;
+  FILTERS.needsReview = true;
+  renderFeed();
+}
+
+/* ============ HELPERS ============ */
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s) { return escapeHtml(s).replace(/\n/g, ' '); }
+function cssEscape(s) { return String(s).replace(/[\\"]/g, '\\$&'); }
+
+/* ============ BOOT ============ */
+document.addEventListener('DOMContentLoaded', loadAll);
+</script>
+
+</body>
+</html>
