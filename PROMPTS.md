@@ -7,6 +7,8 @@ This document shows the exact prompts the scraper sends to Claude, along with th
 
 The scraper uses a two-pass classification pipeline. Pass 1 is a cheap screen; Pass 2 is full structured extraction. Both are JSON-output-only — no prose, no markdown fences.
 
+**Last updated:** May 2026 (scraper v3.3)
+
 ---
 
 ## Pass 1 — screening
@@ -245,9 +247,9 @@ And similar formats for the other 5 entity tables. Claude has the complete refer
 
 **Why announcement_scope:** the 4 scope buckets are the single most-used filter in the dashboard. Forcing Claude to pick one disambiguates "is this an article about X project, or is X project just the example of a broader story about Y context?" — those are different scopes.
 
-**Why the Q5 mechanic (propose_deal):** earlier iterations had Claude eagerly create deal rows for any mention of a financial transaction. Result: many garbage deal rows for "DOE announces $50M for vague things." The current four-condition gate forces Claude to only propose deals when bilateral counterparties + valid project linkage + identifiable value/type are all present. Edgar still reviews each proposal before it's confirmed.
+**Why the Q5 mechanic (propose_deal):** earlier iterations had Claude eagerly create deal rows for any mention of a financial transaction. Result: many garbage deal rows for "DOE announces $50M for vague things." The current four-condition gate forces Claude to only propose deals when bilateral counterparties + valid project linkage + identifiable value/type are all present. A human reviewer (via the data entry app's Review queue, or directly in the Sheet) still confirms each proposal before its `confirmation_status` flips from `Proposed (scraper)` to `Confirmed`.
 
-**Why new_entity_flags instead of inventing IDs:** if Claude is allowed to invent IDs, the database fragments fast. "DOE Reactor Pilot Program" might be coined as `doe_reactor_pilot`, then later as `pilot_program_doe`, then as `nrc_reactor_pilot`. Edgar wants exactly one ID per real entity, controlled centrally. The flag tells Edgar "this entity is worth adding to the reference data" without polluting the FK columns.
+**Why new_entity_flags instead of inventing IDs:** if Claude is allowed to invent IDs, the database fragments fast. "DOE Reactor Pilot Program" might be coined as `doe_reactor_pilot`, then later as `pilot_program_doe`, then as `nrc_reactor_pilot`. The maintainer wants exactly one ID per real entity, controlled centrally. The flag tells the maintainer "this entity is worth adding to the reference data" without polluting the FK columns.
 
 **Why fingerprints from existing announcements:** primary deduplication is by article URL (in the Seen tab). But the same event sometimes gets covered by two outlets with different URLs (Reuters + Bloomberg of the same NRC ruling). The fingerprint of "project_ids + context_ids + scope + first 80 chars of summary" gives Claude a way to flag these as `is_duplicate=true` before they get written as duplicate announcement rows.
 

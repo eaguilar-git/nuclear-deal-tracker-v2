@@ -4,7 +4,19 @@ This document is the runbook for migrating the Nuclear Deal Tracker v2 from Edga
 
 **Status:** time-sensitive. Edgar is leaving EFI in less than 2 weeks. This migration must complete before then, or the tracker will go dark when his personal credentials are no longer monitored.
 
-**Current state (May 2026):** the system runs entirely on Edgar's personal accounts — Google Sheet ownership and service account in personal GCP project, personal Anthropic API account, GitHub repo at `eaguilar-git/nuclear-deal-tracker-v2` with GitHub Pages dashboard.
+**Last updated:** May 2026
+
+**Current state:**
+
+- ✅ Code is on GitHub at `eaguilar-git/nuclear-deal-tracker-v2` — **public repo** under Edgar's personal account
+- ✅ Dashboard is live at https://eaguilar-git.github.io/nuclear-deal-tracker-v2/ via GitHub Pages
+- ✅ Daily scraper runs at 11:00 UTC via GitHub Actions on the v2 repo; three secrets (`ANTHROPIC_API_KEY`, `GOOGLE_SHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_JSON`) are configured and verified working
+- ⚠️ Anthropic API key is on Edgar's personal Anthropic account
+- ⚠️ Google service account is in Edgar's personal GCP project (`rugged-abacus-405804`)
+- ⚠️ Google Sheet is owned by Edgar's personal Google account
+- ⚠️ The repo and Pages site are under Edgar's personal GitHub account
+
+The migration moves all four ⚠️ assets to EFI ownership and rotates the credentials accordingly. The repo and Pages site are already configured correctly — they just need to be transferred to an EFI GitHub organization.
 
 **Target state:** all four assets owned by EFI Foundation, with a named EFI staff member as the new maintainer, daily scraper continuing to run on schedule, and the dashboard accessible at an EFI-controlled URL.
 
@@ -135,8 +147,10 @@ Two options. Option A (transfer) is recommended.
 
 1. Create new repo in EFI org with the desired name.
 2. On Edgar's machine: `git remote set-url origin https://github.com/<efi-org>/<repo>.git`, then `git push -u origin main`.
-3. Configure GitHub Pages on the new repo (Settings → Pages → main branch → /docs folder).
+3. Configure GitHub Pages on the new repo (Settings → Pages → main branch → / (root) folder). The dashboard's `index.html` lives at the repo root.
 4. Add successor as admin.
+
+**Note on repo visibility:** the v2 repo is currently **public**. After transfer, EFI can keep it public (recommended — it fits the open-knowledge mission) or change to private. Private + GitHub Pages requires a paid GitHub plan.
 
 ### Step 5 — Re-set GitHub Actions secrets
 
@@ -154,7 +168,7 @@ In the new repo: Settings → Secrets and variables → Actions → New reposito
 
 Most of the codebase is config-driven, but two files have hardcoded values pointing at the old Sheet:
 
-**`docs/index.html`** — the dashboard fetches the published CSVs by URL. Find and replace:
+**`index.html`** (at repo root) — the dashboard fetches the published CSVs by URL. Find and replace:
 - The current base URL `https://docs.google.com/spreadsheets/d/e/2PACX-1vQM7PNhnJ1LIuREfARO3eyxpbVtL-yVqQPZ8OOtnKnlzi1_igRd1-zg6Ne0SxHMCKYmQ5g9I_Ba-sRV/pub` → new base URL from Step 1
 - The 6 gids (1113250734, 38565451, 1202517721, 1290975261, 529056657, 2033732112) → 6 new gids from Step 1
 

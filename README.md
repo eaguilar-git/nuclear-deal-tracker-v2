@@ -2,7 +2,10 @@
 
 A semi-automated market intelligence system that monitors U.S. nuclear energy deployment activity, extracts structured deal data, and surfaces it through a live dashboard.
 
-Maintained by Edgar Aguilar (Research Associate, EFI Foundation Nuclear Scaling Initiative).
+**Live dashboard:** https://eaguilar-git.github.io/nuclear-deal-tracker-v2/
+**Source:** https://github.com/eaguilar-git/nuclear-deal-tracker-v2 (public)
+**Maintainer:** Edgar Aguilar (Research Associate, EFI Foundation Nuclear Scaling Initiative) — pending migration to a successor at EFI, see MIGRATION.md.
+**Last updated:** May 2026
 
 ---
 
@@ -98,13 +101,13 @@ Seed contents:
 
 This reference data is the **single source of truth**. The scraper's job is to add *new* announcements (and occasionally propose new deals); it does **not** modify the reference tables.
 
-Edgar maintains the Sites, Units, Projects, and Context Items tables manually. Deals get added either manually or via scraper proposals (which require Edgar's confirmation).
+The maintainer keeps the Sites, Units, Projects, and Context Items tables curated manually. Deals get added either manually or via scraper proposals (which require human confirmation before they're treated as real).
 
 ### The scraper's contribution
 
-The scraper adds rows to the **Announcements** table and occasionally proposes new rows in the **Deals** table (always flagged as `Proposed (scraper)` until Edgar reviews and confirms).
+The scraper adds rows to the **Announcements** table and occasionally proposes new rows in the **Deals** table (always flagged as `Proposed (scraper)` until a maintainer reviews and confirms them).
 
-The scraper does NOT invent new entities. If it sees an article about a new project or context that isn't in the reference data, it flags it in the `new_entity_flags` column of the announcement so Edgar can decide whether to add it to the reference tables.
+The scraper does NOT invent new entities. If it sees an article about a new project or context that isn't in the reference data, it flags it in the `new_entity_flags` column of the announcement so a maintainer can decide whether to add it to the reference tables.
 
 ---
 
@@ -188,13 +191,13 @@ Pass 2 returns a JSON object with all the fields needed for an Announcement row,
 
 Pass 1 uses Claude Haiku (cheap, fast). Pass 2 starts with Haiku too. If Haiku's confidence is `Medium`, the same Pass 2 prompt is re-run with Sonnet (slower, more capable). Sonnet's output is usually more careful about entity linking and edge cases.
 
-If the final extraction (whether from Haiku or escalated Sonnet) is still `Medium` confidence, the announcement is written but a row is also added to the **Review** tab so Edgar can audit it.
+If the final extraction (whether from Haiku or escalated Sonnet) is still `Medium` confidence, the announcement is written but a row is also added to the **Review** tab for human audit. The data entry app's Review queue surfaces these for clearing.
 
 ### Confirmation status on deals
 
-When the scraper proposes a deal, the row is written with `confirmation_status = "Proposed (scraper)"`. The dashboard's default view filters these out — they only appear if Edgar toggles "Show proposed deals."
+When the scraper proposes a deal, the row is written with `confirmation_status = "Proposed (scraper)"`. The dashboard's default view filters these out — they only appear when the "Show proposed deals" toggle is enabled.
 
-Edgar reviews each proposed deal in the Sheet, then either:
+A maintainer reviews each proposed deal (via the data entry app's Review queue, or directly in the Sheet), then either:
 - Edits the row to fill in missing fields and changes status to `Confirmed`, OR
 - Deletes the row if the proposal was wrong
 
@@ -260,33 +263,68 @@ Before sending an article to Claude, the scraper applies cheap keyword filters:
 
 ## Dashboard
 
-The dashboard lives at `docs/index.html` and is hosted on GitHub Pages. It's a single HTML file that fetches the six entity tables as published CSVs from the live Google Sheet, then renders them as:
+The dashboard lives at `index.html` (REPO ROOT, not in `/docs`) and is hosted on GitHub Pages at https://eaguilar-git.github.io/nuclear-deal-tracker-v2/. It's a single HTML file that fetches the six entity tables as published CSVs from the live Google Sheet, then renders them.
 
-### Activity Feed
-Sortable, filterable table of all announcements. Filters:
-- **Row 1:** Project type · Context type · Project stage · State
-- **Row 2:** Deal type · Deal stage · Scope · Source
+The dashboard has two tabs.
 
-Plus date range, "Show needs review" toggle, and "New entities only" toggle. Each announcement row shows the primary linked entity (Project / Deal / Context / Site), clickable to jump to Entity Explorer. Download Excel button exports the current filtered view.
+### Tab 1 — Activity Feed
 
-### Entity Explorer
-Four modes: **Site · Project · Deal · Context item**. Each mode has its own filters and summary KPI panel. Pick an entity from the dropdown or browse the list/cards below.
+The chronological stream of everything new — milestones, partnerships, capital, regulatory actions — scraped daily.
 
-When you click a site, you see: site info + reactor units + active projects + associated deals (with cost roll-up) + linked context items + announcement timeline. The same pattern applies for project, deal, and context detail views.
+**Filters (3 rows):**
+
+- Row 1 (specific entity): Site · Project · Deal · Context item
+- Row 2 (categorical): Reactor class · State · Lead entity
+- Row 3 (dates + toggles): From · To · 30d / 90d / 1y / All time presets · Show needs review · New entities only
+
+The four entity dropdowns (and any dropdown with more than 12 options) include a search-as-you-type box so you can type "vogtle" instead of scrolling.
+
+**Active project pipeline panel** at the top shows the same 47 active projects sliced two ways — by project type and by project stage — each with a totals row.
+
+**Table:**
+- Sortable, paginated (25 / 50 / 100 per page)
+- Source column is a clickable link to the article
+- "Linked to" column shows the primary entity(ies) the announcement concerns, with a tooltip explaining the linkage model
+- All cells wrap text instead of truncating
+- Click any row to expand the full announcement detail inline
+- Download Excel button exports the current filtered view
+
+### Tab 2 — Entity Explorer
+
+"What's this for?" panel at the top explains the view is for checking the status of a specific project, company, or technology.
+
+**Browse-by cards** at the top show the four entry points with their counts and short descriptions: Sites (69) · Projects (47) · Deals (42) · Context items (48). Click a card to switch mode.
+
+**Per-mode filters:**
+
+- **Sites:** State · Project type at site · Operator · Reactor class · Reactor technology · Manufacturer · "Only sites with active projects" toggle
+- **Projects:** Project type · Project stage · Project status · State · Reactor class · Reactor tech · Manufacturer · Has deal type · Has deal stage · Has deal w/ lead · Lead entity type
+- **Deals:** Deal type · Deal stage · Economic type · Lead entity · Lead entity type · Partner mentioned · State
+- **Context items:** Context type · Status · Scope
+
+Plus a free-text search and a dropdown of all entities for direct selection.
+
+**Inline expansion of linked entities.** Inside a project detail view, clicking a linked deal expands a mini deal-card right below it — type, stage, lead, capital, partners, cost contribution, notes, source link — without leaving the project view. Same for linked context items in project view, project cards in site/deal views, etc. Each inline card has an "Open full view →" button for when you need to drill in.
+
+**Inline announcement expansion.** Clicking an announcement in any entity's timeline expands the full detail inline (summary, tags, source link, related entities) instead of switching tabs.
+
+**Download Excel button** exports the currently-filtered list of entities (Sites OR Projects OR Deals OR Contexts) with native columns plus derived counts.
 
 ### Hero KPIs
-Two tiers of metrics across the top:
 
-**Physical fleet (counts reactor units):**
+Two tiers of metrics at the top of the dashboard, with explainer text clarifying how they relate:
+
+**Physical fleet** (counts reactor units):
 - Operating · Construction · Planned · Shut down · Sites
 
-**Pipeline activity (counts projects/deals/announcements):**
-- Projects · Project cost (cost contribution roll-up) · PPA exposure · Deals · Announcements (last 12 months)
+**Pipeline activity** (counts projects/deals/announcements):
+- Projects · Project cost · PPA exposure · Deals · Announcements (last 12 months)
 
 KPIs are clickable where useful — click "Projects" to jump into Project mode in Entity Explorer.
 
 ### Tooltips
-Hover any KPI label or the "Browse by" label for a quick definition. These are the same definitions in this README.
+
+Hover any KPI label or other annotated element for a definition.
 
 ---
 
@@ -294,20 +332,48 @@ Hover any KPI label or the "Browse by" label for a quick definition. These are t
 
 ```
 nuclear-deal-tracker-v2/
-├── README.md                          ← this file
-├── requirements.txt                   ← Python dependencies
-├── scraper.py                         ← the daily scraper
-├── seed_v04.py                        ← one-time Sheet bootstrapper (already run)
-├── clean_existing_urls.py             ← one-time URL cleanup utility
-├── diagnose_feeds.py                  ← optional: check which RSS feeds work
+├── README.md                                       ← this file
+├── MIGRATION.md                                    ← departure handoff runbook
+├── PROMPTS.md                                      ← scraper prompt design + rationale
+├── requirements.txt                                ← Python dependencies
+├── scraper.py                                      ← the daily scraper (v3.3)
+├── index.html                                      ← dashboard (served by GitHub Pages from repo root)
+├── seed_v04.py                                     ← one-time Sheet bootstrapper (already run)
+├── clean_existing_urls.py                          ← one-time URL cleanup utility
+├── diagnose_feeds.py                               ← optional: check which RSS feeds work
+├── test_candidate_feeds.py / _v2.py                ← optional: test new feed candidates
+├── data_entry/
+│   ├── data_entry.html                             ← editing UI (FK validation, dropdowns, review queue)
+│   ├── data_entry_server.py                        ← Flask server (reads/writes the Sheet)
+│   └── start_data_entry.sh                         ← convenience launcher
 ├── reference/
-│   ├── Nuclear_Deal_Tracker_v2_Pass5.xlsx          ← canonical seed data
-│   └── Nuclear_Deal_Tracker_Schema_Backbone_v0.4_locked.docx  ← locked schema doc
-├── docs/
-│   └── index.html                     ← dashboard (served by GitHub Pages)
+│   └── Nuclear_Deal_Tracker_v2_Pass5.xlsx          ← canonical seed data
 └── .github/workflows/
-    └── daily_scrape.yml               ← cron schedule
+    └── daily_scrape.yml                            ← cron schedule (11:00 UTC daily)
 ```
+
+---
+
+## Data entry app
+
+A local Flask + HTML app for adding rows and editing the Sheet with safety rails: foreign-key validation (can't link to a deal that doesn't exist), controlled vocabularies (dropdowns for project_stage etc.), ID auto-generation, and a pending-changes drawer that batches writes for review before pushing.
+
+**Run it:**
+
+```bash
+cd ~/Documents/nuclear-deal-tracker-v2/data_entry
+./start_data_entry.sh
+```
+
+This launches the Flask server on port 8001 and opens the UI in your browser. The first run installs the Python deps (Flask, gspread, openpyxl). All edits stage locally in your browser; click "Push to Sheet" to commit them.
+
+**Review queue tab** (first tab in the data entry app) consolidates three kinds of items the scraper flags for human review:
+
+1. **Medium-confidence announcements** — Pass-2 Claude was unsure about the extraction. Quick "Mark reviewed" button sets confidence to High after you eyeball the summary.
+2. **New entity flagged** — scraper saw a name (project, company, context) not in the database. Click "Edit record" to either create the new entity in its tab, or correct the linkage.
+3. **Proposed deals** — scraper drafted a new deal row. Click "Edit record" to fill missing fields and change confirmation_status from "Proposed (scraper)" to "Confirmed" (or delete it).
+
+Filter chips at the top show counts per type and let you focus on one group at a time.
 
 ---
 
@@ -417,11 +483,12 @@ Treat schema changes as major version bumps (v0.4 → v0.5). The scraper writes 
 
 ---
 
-## What's NOT yet built
+## Future improvements (not yet built)
 
-- **Manual data entry form** — an HTML form with Excel roundtrip for adding rows to the 6 tables outside of the scraper. Useful for private MOUs, conference reveals, conversations.
-- **Better entity-resolution prompts** — current scraper sometimes links to plausibly-related context items (e.g. DOE ARDP) when the article only loosely connects. Tuning the Pass 2 prompt for stricter matching is a future iteration.
+- **Better entity-resolution prompts** — current scraper sometimes links to plausibly-related context items (e.g. DOE ARDP) when the article only loosely connects. Tuning the Pass 2 prompt for stricter matching is a future iteration. See PROMPTS.md for the current Pass 2 logic and known failure modes.
 - **PowerPoint export workflow** — the team has used scraper output to brief leadership; a one-click export for slide-ready summaries would save time.
+- **Health/status indicator on the dashboard** — e.g. "Last scraper run: 4 hours ago · 0 errors." Useful for at-a-glance system health.
+- **Hosted version of the data entry app** — currently the editor is local-only (each user installs Python + runs locally). A hosted version with simple auth would let any team member clear review items from any device. Was deferred pre-departure due to security and maintenance complexity.
 
 ---
 
@@ -516,10 +583,11 @@ The dashboard's Activity Feed defaults to showing all four scopes. Filter to "Pr
 
 ## Credits & contact
 
-Maintainer: Edgar Aguilar, Research Associate, EFI Foundation Nuclear Scaling Initiative
-Schema design contributor: Lin
+Built by Edgar Aguilar (Research Associate, EFI Foundation Nuclear Scaling Initiative). Maintainership is in transition to a successor at EFI — see MIGRATION.md.
+
+Schema design contributor: Lin (EFI)
 Foundational dataset: Sonia's Nuclear Deal Tracker spreadsheet
 Reference sources for Nuclear Layer Cake framework: World Nuclear Association U.S. country profile, World Nuclear Association Outlook Report
 Built with Claude (Anthropic), Python, Google Sheets, and GitHub Pages.
 
-For questions about the data model or to propose schema changes, contact Edgar.
+For questions about the data model or to propose schema changes, contact the current maintainer per MIGRATION.md.
